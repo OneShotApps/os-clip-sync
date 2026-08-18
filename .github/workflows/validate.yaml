@@ -86,7 +86,10 @@ jobs:
           flutter build macos --release --dart-define=CLIP_SYNC_API_URL=https://api.example.test
 
   flutter-windows:
-    runs-on: windows-latest
+    # The UWP share target requires the Visual Studio 2022 UWP toolchain.
+    # windows-latest currently resolves to Visual Studio 2026, which no longer
+    # supplies the Windows Runtime contract references to classic UWP projects.
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
@@ -95,6 +98,8 @@ jobs:
           channel: stable
           cache: true
       - uses: microsoft/setup-msbuild@v3
+        with:
+          vs-version: '[17.0,18.0)'
       - name: Validate and build Windows
         working-directory: apps/public/clip-sync-windows-flutter
         shell: pwsh

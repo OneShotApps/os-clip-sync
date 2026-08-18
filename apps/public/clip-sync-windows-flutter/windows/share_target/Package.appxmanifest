@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
-  IgnorableNamespaces="uap">
+  IgnorableNamespaces="mp uap">
   <Identity Name="OneShotApps.ClipSync" Publisher="CN=Clip Sync Development" Version="0.1.0.0" />
+  <mp:PhoneIdentity
+    PhoneProductId="6d0d2ff9-6bd6-4f47-be68-d4524dd46c32"
+    PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>Clip Sync Share Target</DisplayName>
     <PublisherDisplayName>One Shot Apps</PublisherDisplayName>

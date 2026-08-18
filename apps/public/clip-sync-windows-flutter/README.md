@@ -8,10 +8,10 @@ Build on Windows 11 with Flutter, Visual Studio's Desktop C++ workload, the Univ
 flutter pub get
 flutter analyze
 flutter test
-flutter build windows --release --dart-define=CLIP_SYNC_API_URL=https://api.example.com
+node ..\..\..\tools\with-google-oauth.js -- flutter build windows --release --dart-define=CLIP_SYNC_API_URL=https://api.example.com
 msbuild windows\packaging\Package.wapproj /p:Configuration=Release /p:Platform=x64
 ```
 
 The MSIX packaging project combines the full-trust Flutter executable with a small UWP share-target process. The share target accepts text, bitmaps, and image files, writes one pending item into app-local storage, and launches the `clipsync-share` protocol so the Flutter process uploads it. Sign the resulting MSIX with a trusted deployment certificate before distribution.
 
-Configure Windows Google client values required by `google_sign_in_all_platforms`; email-code sign-in remains available without Google.
+The launcher supplies the Google client values and redirect port required by `google_sign_in_all_platforms`. The Google client must retain exact `http://localhost:8000` origin and redirect entries. Email-code sign-in remains available without Google.

@@ -12,9 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
+      - name: Validate Google OAuth client configuration
+        run: node tools/with-google-oauth.js --check
       - name: Install API dependencies
         working-directory: apps/public/clip-sync-api-hono
         run: bun install --frozen-lockfile
@@ -37,6 +42,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -58,12 +66,15 @@ jobs:
           flutter pub get
           flutter analyze
           flutter test
-          flutter build apk --debug --dart-define=CLIP_SYNC_API_URL=https://api.example.test
+          node ../../../tools/with-google-oauth.js -- flutter build apk --debug --dart-define=CLIP_SYNC_API_URL=https://api.example.test
 
   flutter-apple:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.47.0
@@ -76,14 +87,14 @@ jobs:
           flutter analyze
           flutter test
           GEM_HOME="$(brew --prefix cocoapods)/libexec" ruby tool/configure-share-extension.rb
-          flutter build ios --release --no-codesign --dart-define=CLIP_SYNC_API_URL=https://api.example.test
+          node ../../../tools/with-google-oauth.js -- flutter build ios --release --no-codesign --dart-define=CLIP_SYNC_API_URL=https://api.example.test
       - name: Validate and build macOS
         working-directory: apps/public/clip-sync-macos-flutter
         run: |
           flutter pub get
           flutter analyze
           flutter test
-          flutter build macos --release --dart-define=CLIP_SYNC_API_URL=https://api.example.test
+          node ../../../tools/with-google-oauth.js -- flutter build macos --release --dart-define=CLIP_SYNC_API_URL=https://api.example.test
 
   flutter-windows:
     # The UWP share target requires the Visual Studio 2022 UWP toolchain.
@@ -92,6 +103,9 @@ jobs:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.47.0
@@ -107,5 +121,5 @@ jobs:
           flutter pub get
           flutter analyze
           flutter test
-          flutter build windows --release --dart-define=CLIP_SYNC_API_URL=https://api.example.test
+          node ../../../tools/with-google-oauth.js -- flutter build windows --release --dart-define=CLIP_SYNC_API_URL=https://api.example.test
           msbuild windows\packaging\Package.wapproj /restore /p:Configuration=Release /p:Platform=x64

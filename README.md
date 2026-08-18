@@ -19,7 +19,7 @@ The approved behavior is defined in [docs/concepts/REQUIREMENTS.md](docs/concept
 Prerequisites are Docker Desktop with Compose v2 and ports 4100, 5400, 27017, and 8025 available.
 
 ```sh
-docker compose -f compose.local.yaml up --build -d
+node tools/with-google-oauth.js -- docker compose -f compose.local.yaml up --build -d
 docker compose -f compose.local.yaml ps
 curl --fail http://localhost:4100/
 ```
@@ -34,15 +34,17 @@ See [docs/operations/DEPLOYMENT.md](docs/operations/DEPLOYMENT.md) for shared de
 
 ## Run a client
 
-Flutter 3.47 or newer is required. Each app accepts its API endpoint at build time, so no secret is compiled into it.
+Flutter 3.47 or newer and Node.js 22 or newer are required. The repository contains the explicitly approved Google OAuth client configuration at `keys/google-oauth.json`. The launcher validates that file without printing its values, supplies its client ID to the API, and creates a temporary Dart-define file for Flutter that is removed when the command finishes.
 
 ```sh
 cd apps/public/clip-sync-android-flutter
 flutter pub get
-flutter run --dart-define=CLIP_SYNC_API_URL=http://10.0.2.2:4100
+node ../../../tools/with-google-oauth.js -- flutter run --dart-define=CLIP_SYNC_API_URL=http://10.0.2.2:4100
 ```
 
-Use `http://localhost:4100` for desktop and an address reachable from a physical phone for device testing. Google sign-in also requires the platform values described in each app's README. Email-code sign-in works without Google configuration.
+Use `http://localhost:4100` for desktop and an address reachable from a physical phone for device testing. The committed Google web client must retain the exact `http://localhost:8000` JavaScript origin and redirect URI because the desktop sign-in callback listens on that loopback address. Android and iOS also require the native registrations described in each app's README. Email-code sign-in works without Google configuration.
+
+Run `node tools/with-google-oauth.js --check` from the repository root to validate the file without starting another process. The OAuth values are intentionally distributed to native builds; this exception does not authorize committing service credentials, signing keys, user tokens, or any other file under `keys/`.
 
 ## Validate
 

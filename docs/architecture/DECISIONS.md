@@ -21,6 +21,7 @@ flowchart LR
 ## Authentication
 
 - Google uses OpenID Connect (OIDC). The API validates the signed Google ID token, issuer, audience, email, and verified-email claim.
+- Native builds receive the explicitly approved Google web OAuth client values from `keys/google-oauth.json`. Desktop authorization returns through the exact `http://localhost:8000` loopback URI. A repository launcher validates the file, avoids displaying its values, and removes its temporary Flutter configuration after each command.
 - Email sign-in uses a random six-digit code that expires after ten minutes, is single-use, and permits five failed attempts. Only a keyed hash is stored.
 - Successful sign-in returns a signed 30-day JSON Web Token (JWT). Native clients store it only in platform secure storage.
 - A verified email address links email and Google identifiers to one account. The first sign-in transaction creates both the account and its single clipboard.
@@ -53,4 +54,4 @@ This is a POC consistency boundary, not a distributed transaction. A production 
 
 ## Standards decisions
 
-Briskhaven engineering, API, data, security, documentation, and deployment guidance is applied at POC depth. Two conservative project-specific choices take priority over more general production patterns: the product's exact one-account/one-clipboard rule replaces multi-tenant organization and membership models, and the Docker-only deployment omits an unused serverless handler. These are scope decisions, not architectural extension points.
+Briskhaven engineering, API, data, security, documentation, and deployment guidance is applied at POC depth. Three conservative project-specific choices take priority over more general patterns: the product's exact one-account/one-clipboard rule replaces multi-tenant organization and membership models; the Docker-only deployment omits an unused serverless handler; and the product owner explicitly approved the distributed native-client OAuth configuration for source control. That approval is limited to `keys/google-oauth.json` and does not cover production service secrets, signing keys, or user tokens. These are scope decisions, not architectural extension points.

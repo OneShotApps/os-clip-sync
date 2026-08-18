@@ -7,8 +7,8 @@ Clip Sync runs its complete server stack with Docker Compose on one host. The AP
 Prerequisites: Docker Desktop/Engine with Compose v2 and the local ports listed in the root README.
 
 ```sh
-docker compose -f compose.local.yaml config --quiet
-docker compose -f compose.local.yaml up --build -d
+node tools/with-google-oauth.js -- docker compose -f compose.local.yaml config --quiet
+node tools/with-google-oauth.js -- docker compose -f compose.local.yaml up --build -d
 docker compose -f compose.local.yaml ps
 curl --fail http://localhost:4100/
 ```
@@ -28,12 +28,12 @@ docker compose -f compose.local.yaml down
 
 ## Shared development
 
-Copy `.env.example` to an uncommitted `.env`, replace every placeholder, and use a development-only SMTP account and Google OIDC client ID.
+Copy `.env.example` to an uncommitted `.env`, replace every placeholder except the Google client ID, and use a development-only SMTP account. The launcher reads the approved Google OpenID Connect (OIDC) client from `keys/google-oauth.json` and supplies its ID only to the child Compose process.
 
 ```sh
-docker compose --env-file .env -f compose.dev.yaml config --quiet
-docker compose --env-file .env -f compose.dev.yaml build api
-docker compose --env-file .env -f compose.dev.yaml up -d
+node tools/with-google-oauth.js -- docker compose --env-file .env -f compose.dev.yaml config --quiet
+node tools/with-google-oauth.js -- docker compose --env-file .env -f compose.dev.yaml build api
+node tools/with-google-oauth.js -- docker compose --env-file .env -f compose.dev.yaml up -d
 docker compose --env-file .env -f compose.dev.yaml ps
 curl --fail "http://127.0.0.1:${CLIP_SYNC_API_PORT}/"
 ```
@@ -64,7 +64,7 @@ Stop the application with `docker compose --env-file /secure/path/clip-sync.env 
 
 - PostgreSQL and MongoDB URLs must use the Compose service names `postgres` and `mongo` inside containers.
 - JWT secret and authentication-code pepper must be distinct random values of at least 32 characters.
-- `CLIP_SYNC_GOOGLE_CLIENT_IDS` is a comma-separated allowlist of native Google OIDC client IDs.
+- `CLIP_SYNC_GOOGLE_CLIENT_IDS` is a comma-separated allowlist of native Google OIDC client IDs. For local and shared development, `tools/with-google-oauth.js` supplies the single committed client ID without displaying it. Production may supply the same ID or a wider approved allowlist through its deployment environment.
 - SMTP host, port, security flag, optional credentials, and sender must describe a working provider.
 - The API port must be available to the reverse proxy.
 
@@ -78,5 +78,7 @@ Startup fails with a readable validation error when required values are absent o
 4. Verify datastore URLs use container service names, not `localhost`.
 5. Verify SMTP reachability and Google audience configuration if one authentication method alone fails.
 6. If a database migration fails, stop the rollout and inspect the exact SQL error. Do not delete or recreate production volumes as a repair.
+
+For Google redirect errors, run `node tools/with-google-oauth.js --check`. The committed client must list exactly `http://localhost:8000` as both a JavaScript origin and redirect URI; a different port, trailing slash, host spelling, or path does not match.
 
 The container registry must be reachable during the first build or pull. A registry timeout is an infrastructure failure; retry after connectivity is restored rather than changing application code.

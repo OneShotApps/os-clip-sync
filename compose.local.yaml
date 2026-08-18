@@ -13,7 +13,7 @@ services:
       CLIP_SYNC_MONGO_URL: mongodb://clip_sync:local-mongo-password@mongo:27017/clip_sync?authSource=admin
       CLIP_SYNC_JWT_SECRET: local-jwt-secret-change-before-shared-use
       CLIP_SYNC_AUTH_CODE_PEPPER: local-code-pepper-change-before-shared-use
-      CLIP_SYNC_GOOGLE_CLIENT_IDS: local-placeholder.apps.googleusercontent.com
+      CLIP_SYNC_GOOGLE_CLIENT_IDS: ${CLIP_SYNC_GOOGLE_CLIENT_IDS:-local-placeholder.apps.googleusercontent.com}
       CLIP_SYNC_SMTP_HOST: mailpit
       CLIP_SYNC_SMTP_PORT: 1025
       CLIP_SYNC_SMTP_SECURE: "false"

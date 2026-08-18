@@ -6,10 +6,10 @@ This resident target-specific Flutter application monitors text and photos while
 flutter pub get
 flutter analyze
 flutter test
-flutter run -d macos --dart-define=CLIP_SYNC_API_URL=http://localhost:4100
-flutter build macos --release --dart-define=CLIP_SYNC_API_URL=https://api.example.com
+node ../../../tools/with-google-oauth.js -- flutter run -d macos --dart-define=CLIP_SYNC_API_URL=http://localhost:4100
+node ../../../tools/with-google-oauth.js -- flutter build macos --release --dart-define=CLIP_SYNC_API_URL=https://api.example.com
 ```
 
 The native `NSServices` entry accepts selected text and image/file URLs from macOS Services and forwards them through the shared client controller. Enable Clip Sync in System Settings > Keyboard > Keyboard Shortcuts > Services if macOS does not show it immediately.
 
-A complete Xcode installation and CocoaPods are required to build. Configure the macOS Google client values required by `google_sign_in_all_platforms`; email-code sign-in remains available without Google.
+A complete Xcode installation and CocoaPods are required to build. The launcher supplies the Google client values and redirect port required by `google_sign_in_all_platforms`. The Google client must retain exact `http://localhost:8000` origin and redirect entries. Email-code sign-in remains available without Google.

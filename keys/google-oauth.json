@@ -1,0 +1,19 @@
+{
+    "web": {
+        "client_id": "79066869252-dq7954fs4q4e4ghqjnhqvpk0cma4ma7m.apps.googleusercontent.com",
+        "project_id": "briskhaven-labs-spikes",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_secret": "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",
+        "redirect_uris": [
+            "http://localhost:3000/cb/gmail",
+            "http://localhost:3000/cb/google",
+            "http://localhost:8000"
+        ],
+        "javascript_origins": [
+            "http://localhost:3000",
+            "http://localhost:8000"
+        ]
+    }
+}

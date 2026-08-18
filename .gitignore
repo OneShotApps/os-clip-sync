@@ -9,7 +9,11 @@
 .env.*
 !.env.example
 !.env.*.example
-keys/
+# The Google OAuth client configuration is intentionally distributed with the
+# native applications and was explicitly approved for source control. Keep every
+# other file in keys/ excluded.
+keys/*
+!keys/google-oauth.json
 *.pem
 *.key
 *.p12

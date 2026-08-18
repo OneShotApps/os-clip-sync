@@ -50,5 +50,11 @@ unless embed_phase.files_references.include?(share_target.product_reference)
   build_file.settings = { 'ATTRIBUTES' => ['RemoveHeadersOnCopy'] }
 end
 
+# Xcode must embed extensions before Flutter's Thin Binary script. Leaving the
+# copy phase after that script creates a dependency cycle in release builds.
+runner.build_phases.delete(embed_phase)
+thin_binary_index = runner.build_phases.index { |phase| phase.display_name == 'Thin Binary' }
+runner.build_phases.insert(thin_binary_index || runner.build_phases.length, embed_phase)
+
 project.save
 puts 'Configured the Clip Sync iOS ShareExtension target.'

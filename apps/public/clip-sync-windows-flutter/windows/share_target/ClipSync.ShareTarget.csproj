@@ -51,7 +51,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Windows">
-      <HintPath>$(WindowsSdkDir)UnionMetadata\$(TargetPlatformVersion)\Windows.winmd</HintPath>
+      <HintPath>$(WindowsSDK_UnionMetadataPath)\Windows.winmd</HintPath>
       <IsWinMDFile>true</IsWinMDFile>
     </Reference>
   </ItemGroup>

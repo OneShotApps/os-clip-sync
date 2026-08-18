@@ -17,6 +17,7 @@
     <AppxPackage>false</AppxPackage>
     <GenerateAppxPackageOnBuild>false</GenerateAppxPackageOnBuild>
     <ProjectTypeGuids>{BC8A1FFA-BEE3-4634-8014-F334798102B3};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <WindowsMetadataPath Condition="'$(WindowsMetadataPath)' == ''">$(MSBuildProgramFiles32)\Windows Kits\10\UnionMetadata\$(TargetPlatformVersion)\Windows.winmd</WindowsMetadataPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutputPath>bin\x64\Release\</OutputPath>
@@ -51,7 +52,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Windows">
-      <HintPath>$(WindowsSDK_UnionMetadataPath)\Windows.winmd</HintPath>
+      <HintPath>$(WindowsMetadataPath)</HintPath>
       <IsWinMDFile>true</IsWinMDFile>
     </Reference>
   </ItemGroup>

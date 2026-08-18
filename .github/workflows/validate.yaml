@@ -103,4 +103,8 @@ jobs:
           flutter analyze
           flutter test
           flutter build windows --release --dart-define=CLIP_SYNC_API_URL=https://api.example.test
-          msbuild windows\packaging\Package.wapproj /restore /p:Configuration=Release /p:Platform=x64
+          $windowsMetadataPath = Join-Path ${env:ProgramFiles(x86)} "Windows Kits\10\UnionMetadata\10.0.22621.0\Windows.winmd"
+          if (-not (Test-Path -LiteralPath $windowsMetadataPath)) {
+            throw "Windows SDK metadata was not found at $windowsMetadataPath"
+          }
+          msbuild windows\packaging\Package.wapproj /restore /p:Configuration=Release /p:Platform=x64 /p:WindowsMetadataPath="$windowsMetadataPath"

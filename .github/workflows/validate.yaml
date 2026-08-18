@@ -99,12 +99,16 @@ jobs:
         working-directory: apps/public/clip-sync-windows-flutter
         shell: pwsh
         run: |
+          $metadataRoot = Join-Path ${env:ProgramFiles(x86)} "Windows Kits\10\UnionMetadata"
+          $windowsMetadataFile = Get-ChildItem -LiteralPath $metadataRoot -Filter Windows.winmd -File -Recurse -ErrorAction Stop |
+            Sort-Object FullName |
+            Select-Object -Last 1
+          if ($null -eq $windowsMetadataFile) {
+            throw "Windows SDK metadata was not found beneath $metadataRoot"
+          }
+          $windowsMetadataPath = $windowsMetadataFile.FullName
           flutter pub get
           flutter analyze
           flutter test
           flutter build windows --release --dart-define=CLIP_SYNC_API_URL=https://api.example.test
-          $windowsMetadataPath = Join-Path ${env:ProgramFiles(x86)} "Windows Kits\10\UnionMetadata\10.0.22621.0\Windows.winmd"
-          if (-not (Test-Path -LiteralPath $windowsMetadataPath)) {
-            throw "Windows SDK metadata was not found at $windowsMetadataPath"
-          }
           msbuild windows\packaging\Package.wapproj /restore /p:Configuration=Release /p:Platform=x64 /p:WindowsMetadataPath="$windowsMetadataPath"

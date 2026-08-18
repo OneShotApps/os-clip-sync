@@ -50,7 +50,10 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="Windows" />
+    <Reference Include="Windows">
+      <HintPath>$(WindowsSdkDir)UnionMetadata\$(TargetPlatformVersion)\Windows.winmd</HintPath>
+      <IsWinMDFile>true</IsWinMDFile>
+    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
 </Project>

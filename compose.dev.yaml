@@ -1,0 +1,76 @@
+name: clip-sync-dev
+
+services:
+  api:
+    image: clip-sync-api:${CLIP_SYNC_IMAGE_TAG:?Set CLIP_SYNC_IMAGE_TAG}
+    build:
+      context: ./apps/public/clip-sync-api-hono
+      target: production
+    environment:
+      CLIP_SYNC_ENV: development
+      CLIP_SYNC_API_PORT: 4100
+      CLIP_SYNC_POSTGRES_URL: ${CLIP_SYNC_POSTGRES_URL:?Set CLIP_SYNC_POSTGRES_URL}
+      CLIP_SYNC_MONGO_URL: ${CLIP_SYNC_MONGO_URL:?Set CLIP_SYNC_MONGO_URL}
+      CLIP_SYNC_JWT_SECRET: ${CLIP_SYNC_JWT_SECRET:?Set CLIP_SYNC_JWT_SECRET}
+      CLIP_SYNC_AUTH_CODE_PEPPER: ${CLIP_SYNC_AUTH_CODE_PEPPER:?Set CLIP_SYNC_AUTH_CODE_PEPPER}
+      CLIP_SYNC_GOOGLE_CLIENT_IDS: ${CLIP_SYNC_GOOGLE_CLIENT_IDS:?Set CLIP_SYNC_GOOGLE_CLIENT_IDS}
+      CLIP_SYNC_SMTP_HOST: ${CLIP_SYNC_SMTP_HOST:?Set CLIP_SYNC_SMTP_HOST}
+      CLIP_SYNC_SMTP_PORT: ${CLIP_SYNC_SMTP_PORT:?Set CLIP_SYNC_SMTP_PORT}
+      CLIP_SYNC_SMTP_SECURE: ${CLIP_SYNC_SMTP_SECURE:?Set CLIP_SYNC_SMTP_SECURE}
+      CLIP_SYNC_SMTP_USER: ${CLIP_SYNC_SMTP_USER:-}
+      CLIP_SYNC_SMTP_PASSWORD: ${CLIP_SYNC_SMTP_PASSWORD:-}
+      CLIP_SYNC_EMAIL_FROM: ${CLIP_SYNC_EMAIL_FROM:?Set CLIP_SYNC_EMAIL_FROM}
+      CLIP_SYNC_CORS_ORIGINS: ${CLIP_SYNC_CORS_ORIGINS:?Set CLIP_SYNC_CORS_ORIGINS}
+    ports:
+      - "${CLIP_SYNC_API_PORT:?Set CLIP_SYNC_API_PORT}:4100"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bun", "-e", "const r=await fetch('http://127.0.0.1:4100/');if(!r.ok)process.exit(1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [clip_sync]
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${CLIP_SYNC_POSTGRES_USER:?Set CLIP_SYNC_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${CLIP_SYNC_POSTGRES_PASSWORD:?Set CLIP_SYNC_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${CLIP_SYNC_POSTGRES_DATABASE:?Set CLIP_SYNC_POSTGRES_DATABASE}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks: [clip_sync]
+
+  mongo:
+    image: mongo:8
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${CLIP_SYNC_MONGO_USER:?Set CLIP_SYNC_MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${CLIP_SYNC_MONGO_PASSWORD:?Set CLIP_SYNC_MONGO_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --username \"$$MONGO_INITDB_ROOT_USERNAME\" --password \"$$MONGO_INITDB_ROOT_PASSWORD\" --authenticationDatabase admin --eval \"quit(db.adminCommand('ping').ok ? 0 : 2)\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks: [clip_sync]
+
+volumes:
+  postgres_data:
+  mongo_data:
+
+networks:
+  clip_sync:
+    name: clip-sync-dev

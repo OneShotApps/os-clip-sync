@@ -1,0 +1,38 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://clip-sync.local/schemas/clipboard.schema.yaml
+title: Clipboard
+description: The single top-level clipboard owned by an account.
+type: object
+additionalProperties: false
+required: [uid, accountId, createdAt, updatedAt, deletedAt]
+properties:
+  uid:
+    type: string
+    pattern: ^[A-F0-9]{32}$
+  accountId:
+    type: integer
+    minimum: 1
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  deletedAt:
+    type: string
+    format: date-time
+x-storage:
+  engine: postgresql
+  schema: clip_sync_core
+  table: clipboard
+  classification: assignment
+  constraints:
+    - name: uk_clipboard_uid
+      unique: true
+      fields: [uid]
+    - name: uk_clipboard_account_id_deleted_at
+      unique: true
+      fields: [account_id, deleted_at]
+  indexes:
+    - name: idx_clipboard_account_id_deleted_at
+      fields: [account_id, deleted_at]

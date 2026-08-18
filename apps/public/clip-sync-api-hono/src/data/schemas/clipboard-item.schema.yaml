@@ -1,0 +1,75 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://clip-sync.local/schemas/clipboard-item.schema.yaml
+title: Clipboard Item
+description: MongoDB document containing one text or image clipboard payload.
+type: object
+additionalProperties: false
+required:
+  - uid
+  - accountUid
+  - clipboardUid
+  - kind
+  - mimeType
+  - sizeBytes
+  - sourcePlatform
+  - createdAt
+  - deletedAt
+properties:
+  uid:
+    type: string
+    pattern: ^[A-F0-9]{32}$
+  accountUid:
+    type: string
+    pattern: ^[A-F0-9]{32}$
+    description: Intentionally duplicated ownership key used on every isolation query.
+  clipboardUid:
+    type: string
+    pattern: ^[A-F0-9]{32}$
+    description: Public UID of the owning PostgreSQL clipboard.
+  kind:
+    type: string
+    enum: [text, image]
+  text:
+    type: string
+    maxLength: 262144
+  imageData:
+    description: BSON binary containing PNG, JPEG, or WebP bytes.
+  mimeType:
+    type: string
+    enum: [text/plain, image/png, image/jpeg, image/webp]
+  sizeBytes:
+    type: integer
+    minimum: 1
+    maximum: 10485760
+  sourcePlatform:
+    type: string
+    enum: [windows, macos, ios, android]
+  createdAt:
+    type: integer
+    minimum: 1
+    description: Unix epoch milliseconds.
+  deletedAt:
+    type: integer
+    minimum: 0
+    description: Zero means active; otherwise Unix epoch milliseconds of deletion.
+oneOf:
+  - required: [text]
+    properties:
+      kind:
+        const: text
+  - required: [imageData]
+    properties:
+      kind:
+        const: image
+x-storage:
+  engine: mongodb
+  collection: clipboard_items
+  publicIdentifier: uid
+  indexes:
+    - name: uk_clipboard_items_uid
+      unique: true
+      fields: [uid]
+    - name: idx_clipboard_items_account_deleted_created
+      fields: [accountUid, deletedAt, createdAt]
+    - name: idx_clipboard_items_clipboard_deleted_created
+      fields: [clipboardUid, deletedAt, createdAt]

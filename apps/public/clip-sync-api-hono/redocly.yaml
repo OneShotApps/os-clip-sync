@@ -1,0 +1,7 @@
+extends:
+  - recommended
+
+rules:
+  # The real-time operation correctly returns an HTTP 101 WebSocket upgrade,
+  # so requiring a conventional 2xx response would make that contract false.
+  operation-2xx-response: off

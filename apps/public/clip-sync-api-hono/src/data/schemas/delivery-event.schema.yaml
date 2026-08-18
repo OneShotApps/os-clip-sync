@@ -1,0 +1,39 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://clip-sync.local/schemas/delivery-event.schema.yaml
+title: Delivery Event
+description: Immutable PostgreSQL metadata for a newly accepted clipboard item.
+type: object
+additionalProperties: false
+required: [uid, accountUid, clipboardUid, itemUid, sourceClientUid, contentKind, createdAt]
+properties:
+  uid:
+    type: string
+    pattern: ^[A-F0-9]{32}$
+  accountUid:
+    type: string
+    pattern: ^[A-F0-9]{32}$
+  clipboardUid:
+    type: string
+    pattern: ^[A-F0-9]{32}$
+  itemUid:
+    type: string
+    pattern: ^[A-F0-9]{32}$
+  sourceClientUid:
+    type: string
+    pattern: ^[A-F0-9]{32}$
+  contentKind:
+    type: string
+    enum: [text, image]
+  createdAt:
+    type: string
+    format: date-time
+x-storage:
+  engine: postgresql
+  schema: clip_sync_delivery_event
+  table: delivery_event
+  classification: entity
+  indexes:
+    - name: idx_delivery_event_account_uid_created_at
+      fields: [account_uid, created_at]
+    - name: idx_delivery_event_clipboard_uid_created_at
+      fields: [clipboard_uid, created_at]

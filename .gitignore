@@ -1,4 +1,4 @@
-# Skill Miser repository exclusions
+# Clip Sync repository exclusions
 #
 # Keep source files, dependency lockfiles, and Terraform's dependency lockfile
 # committed. Ignore generated output, machine-local settings, state, caches, and

@@ -1,0 +1,41 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://clip-sync.local/schemas/login-code.schema.yaml
+title: Login Code Challenge
+description: Short-lived email challenge stored in the isolated authentication-event schema.
+type: object
+additionalProperties: false
+required: [uid, email, codeHash, expiresAt, usedAt, attempts, createdAt]
+properties:
+  uid:
+    type: string
+    pattern: ^[A-F0-9]{32}$
+  email:
+    type: string
+    format: email
+    maxLength: 255
+  codeHash:
+    type: string
+    pattern: ^[a-f0-9]{64}$
+  expiresAt:
+    type: string
+    format: date-time
+  usedAt:
+    type: string
+    format: date-time
+    description: The zero date means the challenge has not been consumed.
+  attempts:
+    type: integer
+    minimum: 0
+    maximum: 5
+  createdAt:
+    type: string
+    format: date-time
+x-storage:
+  engine: postgresql
+  schema: clip_sync_auth_event
+  table: login_code
+  classification: entity
+  zeroDate: '1700-01-01T00:00:00.000Z'
+  indexes:
+    - name: idx_login_code_email_created_at
+      fields: [email, created_at]

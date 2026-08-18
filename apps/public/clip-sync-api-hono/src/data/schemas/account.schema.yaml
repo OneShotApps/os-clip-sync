@@ -1,0 +1,38 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://clip-sync.local/schemas/account.schema.yaml
+title: Account
+description: Provider-independent owner of exactly one private Clip Sync clipboard.
+type: object
+additionalProperties: false
+required: [uid, primaryEmail, createdAt, updatedAt, deletedAt]
+properties:
+  uid:
+    type: string
+    pattern: ^[A-F0-9]{32}$
+  primaryEmail:
+    type: string
+    format: email
+    maxLength: 255
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  deletedAt:
+    type: string
+    format: date-time
+    description: The zero date means the account is active.
+x-storage:
+  engine: postgresql
+  schema: clip_sync_core
+  table: account
+  classification: entity
+  zeroDate: '1700-01-01T00:00:00.000Z'
+  constraints:
+    - name: uk_account_uid
+      unique: true
+      fields: [uid]
+    - name: uk_account_primary_email_deleted_at
+      unique: true
+      fields: [primary_email, deleted_at]

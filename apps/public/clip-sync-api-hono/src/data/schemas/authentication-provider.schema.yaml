@@ -1,0 +1,32 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://clip-sync.local/schemas/authentication-provider.schema.yaml
+title: Authentication Provider
+description: Stable lookup values for supported authentication providers.
+type: object
+additionalProperties: false
+required: [id, name, enumName]
+properties:
+  id:
+    type: string
+    minLength: 1
+    maxLength: 1
+    enum: [E, G]
+  name:
+    type: string
+    maxLength: 50
+  enumName:
+    type: string
+    maxLength: 50
+    enum: [EMAIL_CODE, GOOGLE_OIDC]
+x-storage:
+  engine: postgresql
+  schema: clip_sync_core
+  table: authentication_provider
+  classification: type
+  indexes:
+    - name: uk_authentication_provider_name
+      unique: true
+      fields: [name]
+    - name: uk_authentication_provider_enum_name
+      unique: true
+      fields: [enum_name]

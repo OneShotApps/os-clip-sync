@@ -1,0 +1,98 @@
+name: clip-sync-local
+
+services:
+  api:
+    build:
+      context: ./apps/public/clip-sync-api-hono
+      target: development
+    command: sh -c "bun install --frozen-lockfile && bun run db:migrate && bun run dev"
+    environment:
+      CLIP_SYNC_ENV: local
+      CLIP_SYNC_API_PORT: 4100
+      CLIP_SYNC_POSTGRES_URL: postgres://clip_sync:local-postgres-password@postgres:5432/clip_sync
+      CLIP_SYNC_MONGO_URL: mongodb://clip_sync:local-mongo-password@mongo:27017/clip_sync?authSource=admin
+      CLIP_SYNC_JWT_SECRET: local-jwt-secret-change-before-shared-use
+      CLIP_SYNC_AUTH_CODE_PEPPER: local-code-pepper-change-before-shared-use
+      CLIP_SYNC_GOOGLE_CLIENT_IDS: local-placeholder.apps.googleusercontent.com
+      CLIP_SYNC_SMTP_HOST: mailpit
+      CLIP_SYNC_SMTP_PORT: 1025
+      CLIP_SYNC_SMTP_SECURE: "false"
+      CLIP_SYNC_SMTP_USER: ""
+      CLIP_SYNC_SMTP_PASSWORD: ""
+      CLIP_SYNC_EMAIL_FROM: no-reply@clip-sync.local
+      CLIP_SYNC_CORS_ORIGINS: "*"
+    ports:
+      - "${CLIP_SYNC_LOCAL_API_PORT:-4100}:4100"
+    volumes:
+      - ./apps/public/clip-sync-api-hono:/app
+      - api_node_modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bun", "-e", "const r=await fetch('http://127.0.0.1:4100/');if(!r.ok)process.exit(1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [clip_sync]
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: clip_sync
+      POSTGRES_PASSWORD: local-postgres-password
+      POSTGRES_DB: clip_sync
+    ports:
+      - "${CLIP_SYNC_LOCAL_POSTGRES_PORT:-5400}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clip_sync -d clip_sync"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks: [clip_sync]
+
+  mongo:
+    image: mongo:8
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: clip_sync
+      MONGO_INITDB_ROOT_PASSWORD: local-mongo-password
+    ports:
+      - "${CLIP_SYNC_LOCAL_MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--username", "clip_sync", "--password", "local-mongo-password", "--authenticationDatabase", "admin", "--eval", "quit(db.adminCommand('ping').ok ? 0 : 2)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks: [clip_sync]
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "${CLIP_SYNC_LOCAL_MAILPIT_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [clip_sync]
+
+volumes:
+  api_node_modules:
+  postgres_data:
+  mongo_data:
+
+networks:
+  clip_sync:
+    name: clip-sync-local

@@ -1,0 +1,9 @@
+export const ZERO_DATE = new Date('1700-01-01T00:00:00.000Z');
+export const ZERO_EPOCH = 0;
+export const EMAIL_CODE_TTL_MINUTES = 10;
+export const EMAIL_CODE_MAX_ATTEMPTS = 5;
+export const ACCESS_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30;
+export const MAX_TEXT_BYTES = 256 * 1024;
+export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+export const IMAGE_MIME_TYPES = Object.freeze(['image/jpeg', 'image/png', 'image/webp']);
+export const PLATFORMS = Object.freeze(['windows', 'macos', 'ios', 'android']);

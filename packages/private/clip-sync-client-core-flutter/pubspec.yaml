@@ -1,0 +1,27 @@
+name: clip_sync_client_core
+description: Shared API, authentication, clipboard, and state logic for Clip Sync native clients.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+dependencies:
+  crypto: ^3.0.7
+  flutter:
+    sdk: flutter
+  flutter_secure_storage: ^10.0.0
+  google_sign_in_all_platforms: ^2.0.3
+  http: ^1.6.0
+  share_handler: ^0.0.25
+  super_clipboard: ^0.9.1
+  uuid: ^4.6.0
+  web_socket_channel: ^3.0.3
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter: {}

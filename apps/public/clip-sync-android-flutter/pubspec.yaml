@@ -1,0 +1,21 @@
+name: clip_sync_android
+description: Android history and share client for Clip Sync.
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  clip_sync_client_core:
+    path: ../../../packages/private/clip-sync-client-core-flutter
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,37 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://clip-sync.local/schemas/account-identifier.schema.yaml
+title: Account Identifier
+description: Authentication-provider identity linked to an internal account.
+type: object
+additionalProperties: false
+required: [accountId, authenticationProviderId, providerIdentifier, createdAt, deletedAt]
+properties:
+  accountId:
+    type: integer
+    minimum: 1
+    description: Internal same-schema account reference; never exposed by the API.
+  authenticationProviderId:
+    type: string
+    enum: [E, G]
+  providerIdentifier:
+    type: string
+    minLength: 1
+    maxLength: 255
+  createdAt:
+    type: string
+    format: date-time
+  deletedAt:
+    type: string
+    format: date-time
+x-storage:
+  engine: postgresql
+  schema: clip_sync_core
+  table: account_identifier
+  classification: association
+  indexes:
+    - name: idx_account_identifier_account_id_deleted_at
+      fields: [account_id, deleted_at]
+  constraints:
+    - name: uk_account_identifier_provider_value_deleted_at
+      unique: true
+      fields: [authentication_provider_id, provider_identifier, deleted_at]

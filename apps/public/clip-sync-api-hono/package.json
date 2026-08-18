@@ -1,0 +1,37 @@
+{
+  "name": "clip-sync-api-hono",
+  "version": "0.1.0",
+  "description": "Clip Sync UX API and real-time clipboard delivery service",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/server.js",
+    "start": "bun src/server.js",
+    "db:migrate": "bun src/data/migrate.js",
+    "lint": "eslint .",
+    "openapi:lint": "redocly lint openapi.yaml",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "test": "vitest run",
+    "test:integration": "bun test/integration/stack.js",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.2",
+    "hono": "4.13.3",
+    "hono-rate-limiter": "0.5.3",
+    "jose": "6.2.9",
+    "mongoose": "8.24.3",
+    "nodemailer": "9.0.5",
+    "postgres": "3.4.9",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@redocly/cli": "2.20.0",
+    "eslint": "10.8.1",
+    "globals": "17.11.0",
+    "prettier": "3.9.6",
+    "vitest": "4.1.10"
+  }
+}

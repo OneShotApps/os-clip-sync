@@ -1,0 +1,263 @@
+openapi: 3.1.0
+info:
+  title: Clip Sync UX API
+  version: 0.1.0
+  description: Native-client authentication, private clipboard history, and online desktop delivery.
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+servers:
+  - url: /ux/v1
+security: []
+paths:
+  /auth/email/request:
+    post:
+      summary: Send a single-use email sign-in code
+      operationId: requestEmailCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email, maxLength: 255 }
+      responses:
+        '202':
+          description: Challenge accepted and email queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [challengeUid, expiresAt]
+                properties:
+                  challengeUid: { $ref: '#/components/schemas/Uid' }
+                  expiresAt: { type: string, format: date-time }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /auth/email/verify:
+    post:
+      summary: Consume an email code and sign in
+      operationId: verifyEmailCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [challengeUid, code]
+              properties:
+                challengeUid: { $ref: '#/components/schemas/Uid' }
+                code: { type: string, pattern: '^\d{6}$' }
+      responses:
+        '200': { $ref: '#/components/responses/AuthSession' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /auth/google:
+    post:
+      summary: Sign in with a Google OIDC ID token
+      operationId: googleSignIn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idToken]
+              properties:
+                idToken: { type: string, minLength: 20, maxLength: 20000 }
+      responses:
+        '200': { $ref: '#/components/responses/AuthSession' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /history:
+    get:
+      summary: List the authenticated account's active history
+      operationId: listHistory
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - {
+            name: pageSize,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100, default: 50 },
+          }
+      responses:
+        '200':
+          description: Newest-first history page; image content is omitted from this list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, pagination]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/ClipboardItem' } }
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /items:
+    post:
+      summary: Persist and deliver a clipboard item
+      operationId: createClipboardItem
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateClipboardItem' }
+      responses:
+        '201':
+          description: Persisted item including its content
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [item]
+                properties:
+                  item: { $ref: '#/components/schemas/ClipboardItem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '413': { $ref: '#/components/responses/BadRequest' }
+        '415': { $ref: '#/components/responses/BadRequest' }
+  /items/{itemUid}:
+    parameters:
+      - name: itemUid
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uid' }
+    get:
+      summary: Get one owner-scoped item including photo bytes
+      operationId: getClipboardItem
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Clipboard item
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [item]
+                properties:
+                  item: { $ref: '#/components/schemas/ClipboardItem' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      summary: Soft-delete one owner-scoped item
+      operationId: deleteClipboardItem
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Item deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /realtime:
+    get:
+      summary: Open an online-only desktop WebSocket
+      description: Upgrade to WebSocket. Sends `connected`, `pong`, and `clipboard-item` JSON messages. It never replays offline items.
+      operationId: connectRealtime
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: clientUid
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/Uid' }
+        - name: platform
+          in: query
+          required: true
+          schema: { type: string, enum: [windows, macos] }
+      responses:
+        '101': { description: WebSocket upgrade accepted }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Uid:
+      type: string
+      pattern: '^[A-F0-9]{32}$'
+      example: 01AB23CD45EF67AB89CD01EF23AB45CD
+    Platform:
+      type: string
+      enum: [windows, macos, ios, android]
+    Account:
+      type: object
+      required: [uid, email, clipboardUid]
+      properties:
+        uid: { $ref: '#/components/schemas/Uid' }
+        email: { type: string, format: email }
+        clipboardUid: { $ref: '#/components/schemas/Uid' }
+    ClipboardItem:
+      type: object
+      required: [uid, kind, mimeType, sizeBytes, sourcePlatform, createdAt]
+      properties:
+        uid: { $ref: '#/components/schemas/Uid' }
+        kind: { type: string, enum: [text, image] }
+        mimeType: { type: string, enum: [text/plain, image/png, image/jpeg, image/webp] }
+        sizeBytes: { type: integer, minimum: 1 }
+        sourcePlatform: { $ref: '#/components/schemas/Platform' }
+        createdAt: { type: string, format: date-time }
+        text: { type: string, description: Present for text items }
+        imageBase64:
+          {
+            type: string,
+            contentEncoding: base64,
+            description: Present for image detail/create responses,
+          }
+    CreateClipboardItem:
+      type: object
+      required: [clientUid, sourcePlatform, kind]
+      properties:
+        clientUid: { $ref: '#/components/schemas/Uid' }
+        sourcePlatform: { $ref: '#/components/schemas/Platform' }
+        kind: { type: string, enum: [text, image] }
+        text: { type: string, description: Required when kind is text; maximum 256 KiB as UTF-8 }
+        imageBase64:
+          {
+            type: string,
+            contentEncoding: base64,
+            description: Required when kind is image; maximum 10 MiB decoded,
+          }
+        mimeType: { type: string, enum: [image/png, image/jpeg, image/webp] }
+    Pagination:
+      type: object
+      required: [page, pageSize, total, totalPages]
+      properties:
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+        totalPages: { type: integer }
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+  responses:
+    AuthSession:
+      description: Authenticated session
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [accessToken, expiresAt, account]
+            properties:
+              accessToken: { type: string }
+              expiresAt: { type: string, format: date-time }
+              account: { $ref: '#/components/schemas/Account' }
+    BadRequest:
+      description: Invalid request or content
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unauthorized:
+      description: Missing, expired, or invalid authentication
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Item absent or belongs to another account
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    RateLimited:
+      description: Too many sign-in requests
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }

@@ -1,0 +1,184 @@
+# Skill Miser repository exclusions
+#
+# Keep source files, dependency lockfiles, and Terraform's dependency lockfile
+# committed. Ignore generated output, machine-local settings, state, caches, and
+# secrets that must not enter source control.
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+keys/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+key.properties
+
+# Logs, process files, and test output
+logs/
+*.log
+*.pid
+*.pid.lock
+coverage/
+.nyc_output/
+junit.xml
+playwright-report/
+test-results/
+
+# Node.js and package managers
+node_modules/
+.npm/
+.pnpm-store/
+.pnp.*
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# React and common frontend tooling
+.eslintcache
+.stylelintcache
+storybook-static/
+.vite/
+
+# Next.js
+.next/
+out/
+.vercel/
+next-env.d.ts
+
+# Webpack
+.cache/
+.webpack-cache/
+*.hot-update.js
+*.hot-update.json
+
+# Babel (JavaScript compiler)
+.babel.json
+.babel-cache/
+babel-cache/
+
+# TypeScript
+*.tsbuildinfo
+
+# General JavaScript build output
+dist/
+build/
+tmp/
+temp/
+
+# Terraform
+# Commit .terraform.lock.hcl so provider versions remain reproducible.
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+plan.out
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Terraform variable files often contain credentials or environment-specific data.
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+!*.tfvars.json.example
+
+# Terragrunt
+**/.terragrunt-cache/**
+.terragrunt-source-manifest
+.terragrunt-download/
+terragrunt-debug.tfvars.json
+
+# Dart and Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+doc/api/
+lib/generated_plugin_registrant.dart
+flutter_export_environment.sh
+
+# Android and Gradle
+.gradle/
+**/.gradle/
+local.properties
+**/local.properties
+captures/
+**/captures/
+.cxx/
+**/.cxx/
+.externalNativeBuild/
+**/.externalNativeBuild/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Xcode, iOS, and macOS application builds
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+xcuserdata/
+**/xcuserdata/
+Pods/
+Carthage/Build/
+.build/
+*.ipa
+*.dSYM
+*.dSYM.zip
+
+# macOS filesystem metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows filesystem metadata
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux desktop and filesystem metadata
+.directory
+.Trash-*
+.nfs*
+
+# Cross-platform editor and temporary files
+*~
+*.swp
+*.swo
+*.tmp
+*.bak
+*.orig

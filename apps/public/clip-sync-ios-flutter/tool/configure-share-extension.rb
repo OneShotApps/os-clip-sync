@@ -8,6 +8,7 @@ runner = project.targets.find { |target| target.name == 'Runner' }
 abort('Runner target was not found.') unless runner
 
 share_group = project.main_group.find_subpath('ShareExtension', true)
+share_group.path = 'ShareExtension'
 share_group.set_source_tree('<group>')
 swift_file = share_group.files.find { |file| file.path == 'ShareViewController.swift' }
 swift_file ||= share_group.new_file('ShareViewController.swift')

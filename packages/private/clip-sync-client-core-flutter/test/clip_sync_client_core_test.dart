@@ -120,6 +120,31 @@ void main() {
     expect(controller.items.single.text, 'new item');
   });
 
+  test('deletes multiple selected history items', () async {
+    final session = _session();
+    final store = _FakeSessionStore(session);
+    final api = _FakeApiClient()
+      ..historyTexts.addAll(['first item', 'second item']);
+    final controller = ClipSyncController(
+      apiClient: api,
+      sessionStore: store,
+      googleAuthService: GoogleAuthService(sessionStore: store),
+      clipboard: ClipboardAdapter(),
+      shareReceiver: _FakeShareReceiver(),
+      deviceNameProvider: _FakeDeviceNameProvider(),
+      platform: 'ios',
+      isDesktop: false,
+    );
+    addTearDown(controller.dispose);
+    await controller.initialize();
+    final selectedItems = controller.items;
+
+    await controller.deleteItems(selectedItems);
+
+    expect(api.deletedItemUids, selectedItems.map((item) => item.uid));
+    expect(controller.items, isEmpty);
+  });
+
   test(
     'registers the OS name and refreshes history after renaming a device',
     () async {
@@ -242,6 +267,8 @@ class _FakeApiClient extends ClipSyncApiClient {
   _FakeApiClient() : super(baseUrl: 'http://example.test');
 
   final List<String> createdTexts = [];
+  final List<String> deletedItemUids = [];
+  final List<String> historyTexts = [];
   final List<SyncDevice> accountDevices = [
     SyncDevice(uid: 'E' * 32, name: 'Other phone', platform: 'android'),
   ];
@@ -293,10 +320,19 @@ class _FakeApiClient extends ClipSyncApiClient {
   }) async {
     historyRequestCount += 1;
     return ClipItemPage(
-      items: historyText == null ? [] : [_textItem(historyText!, _sequence++)],
+      items: historyTexts.isNotEmpty
+          ? historyTexts.map((text) => _textItem(text, _sequence++)).toList()
+          : historyText == null
+          ? []
+          : [_textItem(historyText!, _sequence++)],
       page: 1,
       totalPages: 1,
     );
+  }
+
+  @override
+  Future<void> deleteItem(AuthSession session, String itemUid) async {
+    deletedItemUids.add(itemUid);
   }
 
   @override

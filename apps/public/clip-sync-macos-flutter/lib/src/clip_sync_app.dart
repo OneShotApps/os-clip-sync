@@ -192,8 +192,13 @@ class _HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<_HistoryScreen> with WindowListener {
   late final HistoryRefreshScheduler _refreshScheduler;
+  final Set<String> _selectedItemUids = {};
 
   ClipSyncController get controller => widget.controller;
+
+  List<ClipItem> get _selectedItems => controller.items
+      .where((item) => _selectedItemUids.contains(item.uid))
+      .toList();
 
   @override
   void initState() {
@@ -260,13 +265,32 @@ class _HistoryScreenState extends State<_HistoryScreen> with WindowListener {
     super.dispose();
   }
 
-  Future<void> _delete(BuildContext context, ClipItem item) async {
+  void _toggleSelection(ClipItem item) {
+    setState(() {
+      if (!_selectedItemUids.add(item.uid)) {
+        _selectedItemUids.remove(item.uid);
+      }
+    });
+  }
+
+  void _clearSelection() => setState(_selectedItemUids.clear);
+
+  Future<void> _deleteItems(
+    BuildContext context,
+    List<ClipItem> items, {
+    bool fromSelection = true,
+  }) async {
+    if (items.isEmpty) return;
+    final itemLabel = items.length == 1 ? 'item' : 'items';
+    final title = fromSelection
+        ? 'Delete ${items.length} selected $itemLabel?'
+        : 'Delete history item?';
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete history item?'),
-        content: const Text(
-          'This removes the item from your persisted clipboard history.',
+        title: Text(title),
+        content: Text(
+          'This removes the selected $itemLabel from your persisted clipboard history.',
         ),
         actions: [
           TextButton(
@@ -275,16 +299,28 @@ class _HistoryScreenState extends State<_HistoryScreen> with WindowListener {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text('Delete ${items.length} $itemLabel'),
           ),
         ],
       ),
     );
     if (confirmed == true) {
       try {
-        await controller.deleteItem(item);
+        await controller.deleteItems(items);
+        if (mounted) {
+          setState(() {
+            _selectedItemUids.removeAll(items.map((item) => item.uid));
+          });
+          ScaffoldMessenger.of(this.context).showSnackBar(
+            SnackBar(content: Text('${items.length} $itemLabel deleted.')),
+          );
+        }
       } catch (_) {
         // The controller displays the sanitized API error.
+        if (mounted) {
+          final visibleUids = controller.items.map((item) => item.uid).toSet();
+          setState(() => _selectedItemUids.retainAll(visibleUids));
+        }
       }
     }
   }
@@ -366,10 +402,27 @@ class _HistoryScreenState extends State<_HistoryScreen> with WindowListener {
                   children: [
                     Expanded(
                       child: Text(
-                        'Clipboard history',
+                        _selectedItems.isEmpty
+                            ? 'Clipboard history'
+                            : '${_selectedItems.length} selected',
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                     ),
+                    if (_selectedItems.isNotEmpty) ...[
+                      IconButton(
+                        onPressed: controller.isBusy
+                            ? null
+                            : () => _deleteItems(context, _selectedItems),
+                        tooltip: 'Delete selected items',
+                        icon: const Icon(Icons.delete_outline),
+                      ),
+                      IconButton(
+                        onPressed: _clearSelection,
+                        tooltip: 'Clear selection',
+                        icon: const Icon(Icons.close),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     if (_refreshScheduler.isPaused) ...[
                       Container(
                         key: const ValueKey('history-refresh-paused'),
@@ -431,12 +484,35 @@ class _HistoryScreenState extends State<_HistoryScreen> with WindowListener {
                             );
                           }
                           final item = controller.items[index];
+                          final isSelected = _selectedItemUids.contains(
+                            item.uid,
+                          );
                           return ListTile(
-                            leading: CircleAvatar(
-                              child: Icon(
-                                item.isImage
-                                    ? Icons.image_outlined
-                                    : Icons.text_snippet_outlined,
+                            selected: isSelected,
+                            selectedTileColor: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withValues(alpha: 0.12),
+                            leading: IconButton(
+                              key: ValueKey('select-item-${item.uid}'),
+                              onPressed: () => _toggleSelection(item),
+                              tooltip: isSelected
+                                  ? 'Deselect item'
+                                  : 'Select item',
+                              icon: CircleAvatar(
+                                backgroundColor: isSelected
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
+                                foregroundColor: isSelected
+                                    ? Theme.of(context).colorScheme.onPrimary
+                                    : null,
+                                child: Icon(
+                                  isSelected
+                                      ? Icons.check
+                                      : item.isImage
+                                      ? Icons.image_outlined
+                                      : Icons.text_snippet_outlined,
+                                ),
                               ),
                             ),
                             title: Text(
@@ -462,7 +538,9 @@ class _HistoryScreenState extends State<_HistoryScreen> with WindowListener {
                               }
                             },
                             trailing: IconButton(
-                              onPressed: () => _delete(context, item),
+                              onPressed: () => _deleteItems(context, [
+                                item,
+                              ], fromSelection: false),
                               tooltip: 'Delete',
                               icon: const Icon(Icons.delete_outline),
                             ),

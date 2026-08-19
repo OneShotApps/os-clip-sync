@@ -16,12 +16,16 @@
       .primary { background: #00bfa6; border-color: #00bfa6; color: #04110f; font-weight: 700; }
       main { max-width: 1120px; margin: 0 auto; padding: 40px 32px; }
       .heading { display: flex; align-items: end; justify-content: space-between; margin-bottom: 24px; }
+      .heading-actions { display: flex; align-items: center; gap: 8px; }
       h1 { margin: 0 0 4px; font-size: 30px; }
       p { margin: 0; color: #9fafc1; }
       .status { display: flex; align-items: center; gap: 8px; color: #85eadc; }
       .dot { width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
       .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-      article { min-height: 150px; padding: 20px; border: 1px solid #263750; border-radius: 13px; background: #111d2f; display: flex; flex-direction: column; justify-content: space-between; }
+      article { position: relative; min-height: 150px; padding: 20px 20px 20px 72px; border: 1px solid #263750; border-radius: 13px; background: #111d2f; display: flex; flex-direction: column; justify-content: space-between; }
+      article.selected { border-color: #00bfa6; background: #10302d; }
+      .select { position: absolute; left: 16px; top: 16px; width: 40px; height: 40px; padding: 0; border-radius: 50%; font-size: 18px; }
+      article.selected .select { background: #00bfa6; color: #04110f; }
       article p { color: #dce7e6; overflow-wrap: anywhere; }
       .meta, .actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #8fa2b8; font-size: 13px; }
       .actions { justify-content: flex-end; }
@@ -36,13 +40,13 @@
     </header>
     <main>
       <div class="heading">
-        <div><h1>Clipboard history</h1><p>Private to alex@example.com · newest first</p></div>
-        <div id="status" class="status"><span class="dot"></span><span>Sync active</span></div>
+        <div><h1 id="history-title">Clipboard history</h1><p>Private to alex@example.com · newest first</p></div>
+        <div class="heading-actions"><button id="delete-selected" hidden>Delete selected</button><button id="clear-selection" hidden>Clear</button><div id="status" class="status"><span class="dot"></span><span>Sync active</span></div></div>
       </div>
       <section class="grid" aria-label="Clipboard items">
-        <article><div class="meta"><span>TEXT · MACOS</span><span>Just now</span></div><p>Quarterly planning notes are ready for review.</p><div class="actions"><button>Copy</button><button>Delete</button></div></article>
-        <article><div class="meta"><span>PHOTO · ANDROID</span><span>3 minutes ago</span></div><p>Photo · image/jpeg · 1.8 MB</p><div class="actions"><button>Copy</button><button>Delete</button></div></article>
-        <article><div class="meta"><span>TEXT · WINDOWS</span><span>Yesterday</span></div><p>https://example.com/release-notes</p><div class="actions"><button>Copy</button><button>Delete</button></div></article>
+        <article><button class="select" aria-label="Select item" aria-pressed="false">T</button><div class="meta"><span>TEXT · MACOS</span><span>Just now</span></div><p>Quarterly planning notes are ready for review.</p><div class="actions"><button>Copy</button><button>Delete</button></div></article>
+        <article><button class="select" aria-label="Select item" aria-pressed="false">P</button><div class="meta"><span>PHOTO · ANDROID</span><span>3 minutes ago</span></div><p>Photo · image/jpeg · 1.8 MB</p><div class="actions"><button>Copy</button><button>Delete</button></div></article>
+        <article><button class="select" aria-label="Select item" aria-pressed="false">T</button><div class="meta"><span>TEXT · WINDOWS</span><span>Yesterday</span></div><p>https://example.com/release-notes</p><div class="actions"><button>Copy</button><button>Delete</button></div></article>
       </section>
     </main>
     <script>
@@ -52,6 +56,32 @@
         const paused = status.classList.toggle('paused');
         status.querySelector('span:last-child').textContent = paused ? 'Sync paused' : 'Sync active';
         pause.textContent = paused ? 'Resume sync' : 'Pause sync';
+      });
+      const historyTitle = document.querySelector('#history-title');
+      const deleteSelected = document.querySelector('#delete-selected');
+      const clearSelection = document.querySelector('#clear-selection');
+      const updateSelection = () => {
+        const count = document.querySelectorAll('article.selected').length;
+        historyTitle.textContent = count ? `${count} selected` : 'Clipboard history';
+        deleteSelected.hidden = count === 0;
+        clearSelection.hidden = count === 0;
+      };
+      document.querySelectorAll('.select').forEach((button) => button.addEventListener('click', () => {
+        const selected = button.closest('article').classList.toggle('selected');
+        button.textContent = selected ? '✓' : button.closest('article').querySelector('.meta span').textContent.startsWith('PHOTO') ? 'P' : 'T';
+        button.setAttribute('aria-pressed', String(selected));
+        button.setAttribute('aria-label', selected ? 'Deselect item' : 'Select item');
+        updateSelection();
+      }));
+      clearSelection.addEventListener('click', () => {
+        document.querySelectorAll('article.selected .select').forEach((button) => button.click());
+      });
+      deleteSelected.addEventListener('click', () => {
+        const selected = [...document.querySelectorAll('article.selected')];
+        if (confirm(`Delete ${selected.length} selected ${selected.length === 1 ? 'item' : 'items'}?`)) {
+          selected.forEach((item) => item.remove());
+          updateSelection();
+        }
       });
     </script>
   </body>

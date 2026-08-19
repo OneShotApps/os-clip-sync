@@ -211,8 +211,13 @@ class _MobileHistoryScreen extends StatefulWidget {
 class _MobileHistoryScreenState extends State<_MobileHistoryScreen>
     with WidgetsBindingObserver {
   late final HistoryRefreshScheduler _refreshScheduler;
+  final Set<String> _selectedItemUids = {};
 
   ClipSyncController get controller => widget.controller;
+
+  List<ClipItem> get _selectedItems => controller.items
+      .where((item) => _selectedItemUids.contains(item.uid))
+      .toList();
 
   @override
   void initState() {
@@ -281,7 +286,26 @@ class _MobileHistoryScreenState extends State<_MobileHistoryScreen>
     } catch (_) {}
   }
 
-  Future<void> _delete(BuildContext context, ClipItem item) async {
+  void _toggleSelection(ClipItem item) {
+    setState(() {
+      if (!_selectedItemUids.add(item.uid)) {
+        _selectedItemUids.remove(item.uid);
+      }
+    });
+  }
+
+  void _clearSelection() => setState(_selectedItemUids.clear);
+
+  Future<void> _deleteItems(
+    BuildContext context,
+    List<ClipItem> items, {
+    bool fromSelection = true,
+  }) async {
+    if (items.isEmpty) return;
+    final itemLabel = items.length == 1 ? 'item' : 'items';
+    final title = fromSelection
+        ? 'Delete ${items.length} selected $itemLabel?'
+        : 'Delete history item?';
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
       builder: (context) => SafeArea(
@@ -291,18 +315,15 @@ class _MobileHistoryScreenState extends State<_MobileHistoryScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Delete history item?',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              Text(title, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
-              const Text(
-                'This removes the item from your persisted clipboard history.',
+              Text(
+                'This removes the selected $itemLabel from your persisted clipboard history.',
               ),
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('Delete'),
+                child: Text('Delete ${items.length} $itemLabel'),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
@@ -315,33 +336,65 @@ class _MobileHistoryScreenState extends State<_MobileHistoryScreen>
     );
     if (confirmed == true) {
       try {
-        await controller.deleteItem(item);
-      } catch (_) {}
+        await controller.deleteItems(items);
+        if (mounted) {
+          setState(() {
+            _selectedItemUids.removeAll(items.map((item) => item.uid));
+          });
+          ScaffoldMessenger.of(this.context).showSnackBar(
+            SnackBar(content: Text('${items.length} $itemLabel deleted.')),
+          );
+        }
+      } catch (_) {
+        if (mounted) {
+          final visibleUids = controller.items.map((item) => item.uid).toSet();
+          setState(() => _selectedItemUids.retainAll(visibleUids));
+        }
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Clipboard history'),
+      title: Text(
+        _selectedItems.isEmpty
+            ? 'Clipboard history'
+            : '${_selectedItems.length} selected',
+      ),
       actions: [
-        IconButton(
-          onPressed: controller.isBusy
-              ? null
-              : () => showDeviceManagerSheet(context, controller),
-          tooltip: 'Manage devices',
-          icon: const Icon(Icons.devices_outlined),
-        ),
-        IconButton(
-          onPressed: controller.isBusy ? null : _manualRefresh,
-          tooltip: 'Refresh history',
-          icon: const Icon(Icons.refresh),
-        ),
-        IconButton(
-          onPressed: _signOut,
-          tooltip: 'Sign out',
-          icon: const Icon(Icons.logout),
-        ),
+        if (_selectedItems.isNotEmpty) ...[
+          IconButton(
+            onPressed: controller.isBusy
+                ? null
+                : () => _deleteItems(context, _selectedItems),
+            tooltip: 'Delete selected items',
+            icon: const Icon(Icons.delete_outline),
+          ),
+          IconButton(
+            onPressed: _clearSelection,
+            tooltip: 'Clear selection',
+            icon: const Icon(Icons.close),
+          ),
+        ] else ...[
+          IconButton(
+            onPressed: controller.isBusy
+                ? null
+                : () => showDeviceManagerSheet(context, controller),
+            tooltip: 'Manage devices',
+            icon: const Icon(Icons.devices_outlined),
+          ),
+          IconButton(
+            onPressed: controller.isBusy ? null : _manualRefresh,
+            tooltip: 'Refresh history',
+            icon: const Icon(Icons.refresh),
+          ),
+          IconButton(
+            onPressed: _signOut,
+            tooltip: 'Sign out',
+            icon: const Icon(Icons.logout),
+          ),
+        ],
       ],
     ),
     body: SafeArea(
@@ -416,13 +469,34 @@ class _MobileHistoryScreenState extends State<_MobileHistoryScreen>
                           );
                         }
                         final item = controller.items[index];
+                        final isSelected = _selectedItemUids.contains(item.uid);
                         return ListTile(
                           minTileHeight: 78,
-                          leading: CircleAvatar(
-                            child: Icon(
-                              item.isImage
-                                  ? Icons.image_outlined
-                                  : Icons.text_snippet_outlined,
+                          selected: isSelected,
+                          selectedTileColor: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.12),
+                          leading: IconButton(
+                            key: ValueKey('select-item-${item.uid}'),
+                            onPressed: () => _toggleSelection(item),
+                            tooltip: isSelected
+                                ? 'Deselect item'
+                                : 'Select item',
+                            icon: CircleAvatar(
+                              backgroundColor: isSelected
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
+                              foregroundColor: isSelected
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : null,
+                              child: Icon(
+                                isSelected
+                                    ? Icons.check
+                                    : item.isImage
+                                    ? Icons.image_outlined
+                                    : Icons.text_snippet_outlined,
+                              ),
                             ),
                           ),
                           title: Text(
@@ -434,11 +508,15 @@ class _MobileHistoryScreenState extends State<_MobileHistoryScreen>
                             '${item.sourceDeviceName} • ${item.createdAt}',
                           ),
                           onTap: () => _copy(context, item),
-                          onLongPress: () => _delete(context, item),
+                          onLongPress: () => _deleteItems(context, [
+                            item,
+                          ], fromSelection: false),
                           trailing: PopupMenuButton<String>(
                             onSelected: (action) => action == 'copy'
                                 ? _copy(context, item)
-                                : _delete(context, item),
+                                : _deleteItems(context, [
+                                    item,
+                                  ], fromSelection: false),
                             itemBuilder: (_) => const [
                               PopupMenuItem(value: 'copy', child: Text('Copy')),
                               PopupMenuItem(

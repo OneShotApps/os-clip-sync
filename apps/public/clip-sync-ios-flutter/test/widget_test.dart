@@ -66,7 +66,65 @@ void main() {
 
     expect(find.text('Home Mac'), findsOneWidget);
   });
+
+  testWidgets('selects and confirms deletion of multiple history items', (
+    tester,
+  ) async {
+    final sessionStore = _FakeSessionStore();
+    final apiClient = _FakeApiClient(
+      historyItems: [
+        _historyItem('E' * 32, 'first item'),
+        _historyItem('F' * 32, 'second item'),
+      ],
+    );
+    final controller = ClipSyncController(
+      apiClient: apiClient,
+      sessionStore: sessionStore,
+      googleAuthService: GoogleAuthService(sessionStore: sessionStore),
+      clipboard: ClipboardAdapter(),
+      shareReceiver: _FakeShareReceiver(),
+      deviceNameProvider: _FakeDeviceNameProvider(),
+      platform: 'ios',
+      isDesktop: false,
+    );
+    addTearDown(controller.dispose);
+    await controller.initialize();
+    await tester.pumpWidget(
+      ClipSyncMobileApp(controller: controller, platformName: 'iOS'),
+    );
+
+    await tester.tap(find.byKey(ValueKey('select-item-${'E' * 32}')));
+    await tester.pump();
+    expect(find.text('1 selected'), findsOneWidget);
+
+    await tester.tap(find.byKey(ValueKey('select-item-${'F' * 32}')));
+    await tester.pump();
+    expect(find.text('2 selected'), findsOneWidget);
+    expect(find.byTooltip('Delete selected items'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Delete selected items'));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete 2 selected items?'), findsOneWidget);
+    expect(controller.items, hasLength(2));
+
+    await tester.tap(find.text('Delete 2 items'));
+    await tester.pumpAndSettle();
+
+    expect(apiClient.deletedItemUids, ['E' * 32, 'F' * 32]);
+    expect(controller.items, isEmpty);
+  });
 }
+
+ClipItem _historyItem(String uid, String text) => ClipItem(
+  uid: uid,
+  kind: 'text',
+  mimeType: 'text/plain',
+  sizeBytes: text.length,
+  sourcePlatform: 'macos',
+  sourceDeviceName: 'Test Mac',
+  createdAt: DateTime.utc(2026, 8, 19),
+  text: text,
+);
 
 class _FakeSessionStore extends SessionStore {
   final AuthSession _session = AuthSession(
@@ -85,9 +143,13 @@ class _FakeSessionStore extends SessionStore {
 }
 
 class _FakeApiClient extends ClipSyncApiClient {
-  _FakeApiClient() : super(baseUrl: 'http://example.test');
+  _FakeApiClient({List<ClipItem> historyItems = const []})
+    : historyItems = List<ClipItem>.from(historyItems),
+      super(baseUrl: 'http://example.test');
 
   int historyRequestCount = 0;
+  final List<ClipItem> historyItems;
+  final List<String> deletedItemUids = [];
 
   @override
   Future<SyncDevice> registerDevice({
@@ -117,7 +179,17 @@ class _FakeApiClient extends ClipSyncApiClient {
     int pageSize = 50,
   }) async {
     historyRequestCount += 1;
-    return const ClipItemPage(items: [], page: 1, totalPages: 1);
+    return ClipItemPage(
+      items: List<ClipItem>.from(historyItems),
+      page: 1,
+      totalPages: 1,
+    );
+  }
+
+  @override
+  Future<void> deleteItem(AuthSession session, String itemUid) async {
+    deletedItemUids.add(itemUid);
+    historyItems.removeWhere((item) => item.uid == itemUid);
   }
 }
 

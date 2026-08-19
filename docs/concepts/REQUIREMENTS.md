@@ -124,15 +124,17 @@ There is no administrator user type or cross-account sharing role described for 
 2. The application displays the account's full persisted clipboard history.
 3. The user selects an earlier item.
 4. The client copies the selected item into that device's local operating system clipboard.
-5. The user can delete an unwanted history item through the UI.
-6. Each history item identifies the device that created it by the device's current display name.
-7. The user can open device management and rename any device owned by the account.
+5. The user can tap or click the leading content icon to select or deselect one or more history items. A selected icon displays a checkmark.
+6. When at least one item is selected, the user can choose Delete selected, review the selected count, and confirm before the items are removed.
+7. Each history item identifies the device that created it by the device's current display name.
+8. The user can open device management and rename any device owned by the account.
 
 **Rules and constraints:**
 
 - History is scoped to the authenticated account's single clipboard.
 - History remains indefinitely unless the user deletes an item.
 - Browsing and manually copying history are available on Windows, macOS, iOS, and Android.
+- Multi-item selection, confirmation, and deletion are available on Windows, macOS, iOS, and Android.
 - Persisted history does not cause automatic catch-up synchronization when an offline client reconnects.
 - Clipboard content is stored in MongoDB rather than persisted in the client application.
 - Each client registers its operating-system-reported device name. An account-assigned rename is reflected in history on every other device's next refresh.
@@ -262,12 +264,14 @@ There is no administrator user type or cross-account sharing role described for 
 5. The backend sends it to the account's currently online Windows and Mac clients.
 6. The item is not automatically placed into an iOS or Android clipboard.
 
-### Delete a history item
+### Delete selected history items
 
 1. The user opens clipboard history on a supported client.
-2. The user chooses an item to delete.
-3. The client requests deletion through the backend.
-4. The item no longer appears in the account's persisted clipboard history.
+2. The user taps or clicks the leading content icon for each item to select. Tapping or clicking it again deselects that item.
+3. The client displays the selected count and enables Delete selected.
+4. The user chooses Delete selected and confirms the selected count.
+5. The client requests deletion of every selected item through the backend.
+6. Deleted items no longer appear in the account's persisted clipboard history.
 
 ---
 

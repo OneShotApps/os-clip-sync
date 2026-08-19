@@ -211,12 +211,25 @@ class ClipSyncController extends ChangeNotifier {
     });
   }
 
-  Future<void> deleteItem(ClipItem item) async {
+  Future<void> deleteItem(ClipItem item) => deleteItems([item]);
+
+  /// Deletes the selected history items with the existing owner-scoped API.
+  ///
+  /// Successfully deleted items are removed from the visible list immediately.
+  /// If a later request fails, the remaining items stay visible so the user can
+  /// retry them after reviewing the sanitized error.
+  Future<void> deleteItems(Iterable<ClipItem> items) async {
     final session = _session;
     if (session == null) return;
+    final uniqueItems = <String, ClipItem>{
+      for (final item in items) item.uid: item,
+    }.values.toList(growable: false);
+    if (uniqueItems.isEmpty) return;
     await _runBusy(() async {
-      await apiClient.deleteItem(session, item.uid);
-      _items.removeWhere((candidate) => candidate.uid == item.uid);
+      for (final item in uniqueItems) {
+        await apiClient.deleteItem(session, item.uid);
+        _items.removeWhere((candidate) => candidate.uid == item.uid);
+      }
     });
   }
 

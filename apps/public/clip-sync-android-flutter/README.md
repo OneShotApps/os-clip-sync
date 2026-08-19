@@ -1,6 +1,6 @@
 # Clip Sync for Android
 
-This target-specific Flutter application browses, copies, refreshes, and deletes private history. Its Devices control lists and renames account-owned devices, and history shows the current source-device name. Android's share sheet can send text or photos to Clip Sync. It never monitors or automatically changes the mobile clipboard.
+This target-specific Flutter application browses, copies, refreshes, and deletes private history. Tap the leading content icon on one or more history rows to select them, then use Delete selected and confirm to remove them. Its Devices control lists and renames account-owned devices, and history shows the current source-device name. Android's share sheet can send text or photos to Clip Sync. It never monitors or automatically changes the mobile clipboard.
 
 ```sh
 flutter pub get

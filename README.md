@@ -1,6 +1,6 @@
 # Clip Sync
 
-Clip Sync is a proof-of-concept hosted clipboard service for Windows 11, macOS, iOS, and Android. The desktop applications automatically exchange text and photos while online. Every client can browse the account's private server-backed history, copy an older item, delete it, receive operating-system share actions, and rename account devices. History identifies new items by the source device's operating-system name or its account-assigned rename.
+Clip Sync is a proof-of-concept hosted clipboard service for Windows 11, macOS, iOS, and Android. The desktop applications automatically exchange text and photos while online. Every client can browse the account's private server-backed history, copy an older item, select and confirm deletion of one or more items, receive operating-system share actions, and rename account devices. History identifies new items by the source device's operating-system name or its account-assigned rename.
 
 Visible iOS and macOS history screens automatically refresh every 5 seconds for 30 seconds, then every 30 seconds until pausing at 2 minutes. The paused indicator remains visible until the user presses Refresh, which immediately reloads history and restarts the schedule.
 

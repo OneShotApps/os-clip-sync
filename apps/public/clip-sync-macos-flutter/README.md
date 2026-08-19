@@ -2,6 +2,8 @@
 
 This resident target-specific Flutter application monitors text and photos while active, receives live items into the clipboard, offers history/copy/delete, and exposes Pause, Show, and Quit in the menu bar. Closing the window keeps the user-level process running.
 
+While the clipboard-history window is visible, history refreshes every 5 seconds for 30 seconds, then every 30 seconds. Automatic refresh pauses after 2 minutes and displays a notice. Press Refresh to refresh immediately and restart the schedule. Hiding or minimizing the window stops the schedule until the window is shown again.
+
 ```sh
 flutter pub get
 flutter analyze

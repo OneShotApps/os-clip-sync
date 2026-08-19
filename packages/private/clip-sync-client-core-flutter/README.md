@@ -11,4 +11,4 @@ flutter analyze
 flutter test
 ```
 
-`ClipSyncController` is the UI-facing state boundary. `DesktopSyncController` is instantiated only by Windows and macOS clients; iOS and Android never monitor or automatically update their clipboards. The package stores only authentication state, a random client UID, and the Google access token in operating-system secure storage. It does not persist clipboard content or history.
+`ClipSyncController` is the UI-facing state boundary. `HistoryRefreshScheduler` provides the shared fast, slow, paused, and manual-resume timing used by visible history screens. `DesktopSyncController` is instantiated only by Windows and macOS clients; iOS and Android never monitor or automatically update their clipboards. The package stores only authentication state, a random client UID, and the Google access token in operating-system secure storage. It does not persist clipboard content or history.

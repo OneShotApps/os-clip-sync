@@ -2,7 +2,7 @@
 
 This target-specific Flutter application browses, copies, refreshes, and deletes private history. Its native Share Extension accepts text and photos. It never monitors or automatically changes the mobile clipboard.
 
-Use the refresh button in the clipboard-history header or pull down on the history list to retrieve items copied on another device.
+While clipboard history is visible, the app refreshes every 5 seconds for 30 seconds, then every 30 seconds. Automatic refresh pauses after 2 minutes and displays a notice. Press the refresh button or pull down on the history list to refresh immediately and restart the schedule.
 
 ```sh
 flutter pub get

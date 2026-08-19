@@ -133,6 +133,7 @@ There is no administrator user type or cross-account sharing role described for 
 - Browsing and manually copying history are available on Windows, macOS, iOS, and Android.
 - Persisted history does not cause automatic catch-up synchronization when an offline client reconnects.
 - Clipboard content is stored in MongoDB rather than persisted in the client application.
+- While the iOS or macOS history screen is visible, it refreshes every 5 seconds for the first 30 seconds, then every 30 seconds. Automatic refresh pauses after 2 minutes and shows a visible paused indicator until the user presses Refresh, which reloads history and restarts the schedule.
 
 ### Mobile clipboard access
 

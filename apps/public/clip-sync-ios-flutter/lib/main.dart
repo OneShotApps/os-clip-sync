@@ -192,7 +192,7 @@ class _MobileSignInScreenState extends State<_MobileSignInScreen> {
   }
 }
 
-class _MobileHistoryScreen extends StatelessWidget {
+class _MobileHistoryScreen extends StatefulWidget {
   const _MobileHistoryScreen({
     required this.controller,
     required this.platformName,
@@ -201,10 +201,48 @@ class _MobileHistoryScreen extends StatelessWidget {
   final ClipSyncController controller;
   final String platformName;
 
-  Future<void> _refresh() async {
+  @override
+  State<_MobileHistoryScreen> createState() => _MobileHistoryScreenState();
+}
+
+class _MobileHistoryScreenState extends State<_MobileHistoryScreen>
+    with WidgetsBindingObserver {
+  late final HistoryRefreshScheduler _refreshScheduler;
+
+  ClipSyncController get controller => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _refreshScheduler = HistoryRefreshScheduler(onRefresh: _refreshHistory)
+      ..addListener(_refreshStatusChanged)
+      ..start();
+  }
+
+  void _refreshStatusChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshScheduler.start();
+    } else {
+      _refreshScheduler.stop();
+    }
+  }
+
+  Future<void> _refreshHistory() async {
+    if (controller.isBusy) return;
     try {
       await controller.refreshHistory();
     } catch (_) {}
+  }
+
+  Future<void> _manualRefresh() async {
+    if (controller.isBusy) return;
+    await _refreshScheduler.refreshNow();
   }
 
   Future<void> _loadMore() async {
@@ -214,9 +252,19 @@ class _MobileHistoryScreen extends StatelessWidget {
   }
 
   Future<void> _signOut() async {
+    _refreshScheduler.stop();
     try {
       await controller.signOut();
     } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _refreshScheduler
+      ..removeListener(_refreshStatusChanged)
+      ..dispose();
+    super.dispose();
   }
 
   Future<void> _copy(BuildContext context, ClipItem item) async {
@@ -275,7 +323,7 @@ class _MobileHistoryScreen extends StatelessWidget {
       title: const Text('Clipboard history'),
       actions: [
         IconButton(
-          onPressed: controller.isBusy ? null : _refresh,
+          onPressed: controller.isBusy ? null : _manualRefresh,
           tooltip: 'Refresh history',
           icon: const Icon(Icons.refresh),
         ),
@@ -294,7 +342,7 @@ class _MobileHistoryScreen extends StatelessWidget {
             color: const Color(0xFF151F31),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Text(
-              '$platformName uses manual copy only. Incoming items never replace your mobile clipboard.',
+              '${widget.platformName} uses manual copy only. Incoming items never replace your mobile clipboard.',
             ),
           ),
           if (controller.errorMessage != null)
@@ -307,9 +355,33 @@ class _MobileHistoryScreen extends StatelessWidget {
                 ),
               ],
             ),
+          if (_refreshScheduler.isPaused)
+            Semantics(
+              liveRegion: true,
+              child: Container(
+                key: const ValueKey('history-refresh-paused'),
+                width: double.infinity,
+                color: const Color(0xFF3B2F13),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.pause_circle_outline, size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Automatic refresh paused. Press Refresh to resume.',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           Expanded(
             child: RefreshIndicator(
-              onRefresh: _refresh,
+              onRefresh: _manualRefresh,
               child: controller.items.isEmpty
                   ? ListView(
                       children: const [

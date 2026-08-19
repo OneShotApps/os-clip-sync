@@ -37,7 +37,7 @@ The POC deliberately has no organization, membership, administrator, token-revoc
 - Pausing records the current clipboard fingerprint as the baseline. Resuming records a new baseline, so content copied during the pause is never uploaded later.
 - The WebSocket hub holds online connections in process memory. A newly persisted item is sent to other online Windows/macOS client identifiers only. There is no message queue and no reconnect replay.
 - Manually copying a history item updates the local clipboard and loop-prevention baseline without uploading a duplicate.
-- Mobile apps never poll the clipboard and never open the real-time connection. Pull-to-refresh reloads the newest server page.
+- Mobile apps never poll the clipboard and never open the real-time connection. The visible iOS history screen uses the approved 5-second, 30-second, then paused refresh schedule; pull-to-refresh or the Refresh button reloads the newest server page and restarts that schedule. The visible macOS history screen follows the same schedule independently of its real-time desktop clipboard connection.
 
 ## Persistence and consistency
 

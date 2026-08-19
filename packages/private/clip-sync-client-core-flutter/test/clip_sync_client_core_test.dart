@@ -116,6 +116,51 @@ void main() {
     expect(controller.items, hasLength(1));
     expect(controller.items.single.text, 'new item');
   });
+
+  testWidgets(
+    'history refresh slows down, pauses, and resumes after manual refresh',
+    (tester) async {
+      var now = DateTime.utc(2026, 8, 19);
+      var refreshCount = 0;
+      final scheduler = HistoryRefreshScheduler(
+        onRefresh: () async {
+          refreshCount += 1;
+        },
+        fastInterval: const Duration(seconds: 1),
+        fastPhaseDuration: const Duration(seconds: 2),
+        slowInterval: const Duration(seconds: 3),
+        pauseAfter: const Duration(seconds: 8),
+        now: () => now,
+      );
+      addTearDown(scheduler.dispose);
+
+      Future<void> advance(Duration duration) async {
+        now = now.add(duration);
+        await tester.pump(duration);
+        await tester.pump();
+      }
+
+      scheduler.start();
+      await advance(const Duration(seconds: 1));
+      expect(refreshCount, 1);
+      await advance(const Duration(seconds: 1));
+      expect(refreshCount, 2);
+      await advance(const Duration(seconds: 3));
+      expect(refreshCount, 3);
+
+      await advance(const Duration(seconds: 3));
+      expect(scheduler.isPaused, isTrue);
+      expect(refreshCount, 3);
+
+      await scheduler.refreshNow();
+      expect(scheduler.isPaused, isFalse);
+      expect(refreshCount, 4);
+
+      scheduler.stop();
+      await advance(const Duration(seconds: 10));
+      expect(refreshCount, 4);
+    },
+  );
 }
 
 AuthSession _session() => AuthSession(

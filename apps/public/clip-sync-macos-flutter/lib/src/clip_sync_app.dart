@@ -1,5 +1,6 @@
 import 'package:clip_sync_client_core/clip_sync_client_core.dart';
 import 'package:flutter/material.dart';
+import 'package:window_manager/window_manager.dart';
 
 /// macOS presentation shell. Domain and transport behavior remain in client core.
 class ClipSyncApp extends StatelessWidget {
@@ -178,17 +179,45 @@ class _SignInScreenState extends State<_SignInScreen> {
   }
 }
 
-class _HistoryScreen extends StatelessWidget {
+class _HistoryScreen extends StatefulWidget {
   const _HistoryScreen({required this.controller});
 
   final ClipSyncController controller;
 
-  Future<void> _refresh() async {
+  @override
+  State<_HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<_HistoryScreen> with WindowListener {
+  late final HistoryRefreshScheduler _refreshScheduler;
+
+  ClipSyncController get controller => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    windowManager.addListener(this);
+    _refreshScheduler = HistoryRefreshScheduler(onRefresh: _refreshHistory)
+      ..addListener(_refreshStatusChanged)
+      ..start();
+  }
+
+  void _refreshStatusChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _refreshHistory() async {
+    if (controller.isBusy) return;
     try {
       await controller.refreshHistory();
     } catch (_) {
       // The controller displays the sanitized API error.
     }
+  }
+
+  Future<void> _manualRefresh() async {
+    if (controller.isBusy) return;
+    await _refreshScheduler.refreshNow();
   }
 
   Future<void> _loadMore() async {
@@ -200,11 +229,33 @@ class _HistoryScreen extends StatelessWidget {
   }
 
   Future<void> _signOut() async {
+    _refreshScheduler.stop();
     try {
       await controller.signOut();
     } catch (_) {
       // The controller displays the sanitized error.
     }
+  }
+
+  @override
+  void onWindowClose() => _refreshScheduler.stop();
+
+  @override
+  void onWindowMinimize() => _refreshScheduler.stop();
+
+  @override
+  void onWindowFocus() => _refreshScheduler.start();
+
+  @override
+  void onWindowRestore() => _refreshScheduler.start();
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    _refreshScheduler
+      ..removeListener(_refreshStatusChanged)
+      ..dispose();
+    super.dispose();
   }
 
   Future<void> _delete(BuildContext context, ClipItem item) async {
@@ -310,8 +361,30 @@ class _HistoryScreen extends StatelessWidget {
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                     ),
+                    if (_refreshScheduler.isPaused) ...[
+                      Container(
+                        key: const ValueKey('history-refresh-paused'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3B2F13),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.pause_circle_outline, size: 18),
+                            SizedBox(width: 6),
+                            Text('Automatic refresh paused'),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     IconButton(
-                      onPressed: _refresh,
+                      onPressed: controller.isBusy ? null : _manualRefresh,
                       tooltip: 'Refresh history',
                       icon: const Icon(Icons.refresh),
                     ),

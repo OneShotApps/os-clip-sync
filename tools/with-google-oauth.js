@@ -190,18 +190,17 @@ function run() {
     );
   }
 
-  const command =
-    process.platform === "win32" && parsedArguments.command === "flutter"
-      ? "flutter.bat"
-      : parsedArguments.command;
+  const useWindowsShell =
+    process.platform === "win32" && isFlutterCommand(parsedArguments.command);
 
   try {
-    const result = spawnSync(command, commandArguments, {
+    const result = spawnSync(parsedArguments.command, commandArguments, {
       cwd: parsedArguments.workingDirectory,
       env: {
         ...process.env,
         CLIP_SYNC_GOOGLE_CLIENT_IDS: oauthConfig.clientId,
       },
+      shell: useWindowsShell,
       stdio: "inherit",
     });
 

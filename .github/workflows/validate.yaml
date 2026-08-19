@@ -88,6 +88,10 @@ jobs:
           flutter test
           GEM_HOME="$(brew --prefix cocoapods)/libexec" ruby tool/configure-share-extension.rb
           node ../../../tools/with-google-oauth.js -- flutter build ios --release --no-codesign --dart-define=CLIP_SYNC_API_URL=https://api.example.test
+          APP_PLIST=build/ios/iphoneos/Runner.app/Info.plist
+          EXTENSION_PLIST=build/ios/iphoneos/Runner.app/PlugIns/ShareExtension.appex/Info.plist
+          test "$(plutil -extract CFBundleShortVersionString raw "$APP_PLIST")" = "$(plutil -extract CFBundleShortVersionString raw "$EXTENSION_PLIST")"
+          test "$(plutil -extract CFBundleVersion raw "$APP_PLIST")" = "$(plutil -extract CFBundleVersion raw "$EXTENSION_PLIST")"
       - name: Validate and build macOS
         working-directory: apps/public/clip-sync-macos-flutter
         run: |

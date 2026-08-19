@@ -29,7 +29,7 @@ share_target.build_configurations.each do |configuration|
   settings['GENERATE_INFOPLIST_FILE'] = 'NO'
   settings['INFOPLIST_FILE'] = 'ShareExtension/Info.plist'
   settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
-  settings['MARKETING_VERSION'] = '1.0'
+  settings['MARKETING_VERSION'] = '1.0.0'
   settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'app.oneshot.clipsync.clipSyncIos.ShareExtension'
   settings['PRODUCT_NAME'] = '$(TARGET_NAME)'
   settings['SKIP_INSTALL'] = 'YES'

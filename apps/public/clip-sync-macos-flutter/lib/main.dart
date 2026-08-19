@@ -26,7 +26,7 @@ Future<void> main() async {
     'CLIP_SYNC_API_URL',
     defaultValue: 'http://127.0.0.1:4200',
   );
-  final sessionStore = SessionStore();
+  final sessionStore = SessionStore(allowVolatileFallback: true);
   final controller = ClipSyncController(
     apiClient: ClipSyncApiClient(baseUrl: apiUrl),
     sessionStore: sessionStore,
@@ -37,8 +37,12 @@ Future<void> main() async {
     isDesktop: true,
   );
   final residentDesktop = ResidentDesktop(controller);
-  await residentDesktop.initialize();
-
   runApp(ClipSyncApp(controller: controller));
   unawaited(controller.initialize());
+  unawaited(
+    residentDesktop.initialize().catchError((Object error, StackTrace stack) {
+      debugPrint('Clip Sync menu bar initialization failed: $error');
+      debugPrintStack(stackTrace: stack);
+    }),
+  );
 }

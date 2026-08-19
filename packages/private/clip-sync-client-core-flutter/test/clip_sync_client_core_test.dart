@@ -2,9 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:clip_sync_client_core/clip_sync_client_core.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('auth session round-trips through secure-storage values', () {
     final session = AuthSession(
       accessToken: 'token',
@@ -37,6 +40,33 @@ void main() {
     expect(item.contentDigest, hasLength(64));
     expect(item.contentDigest, item.contentDigest);
   });
+
+  test(
+    'keeps a session in memory when secure storage is unavailable',
+    () async {
+      const channel = MethodChannel(
+        'plugins.it_nomads.com/flutter_secure_storage',
+      );
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (_) async {
+            throw PlatformException(code: 'missing-entitlement');
+          });
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null),
+      );
+      final store = SessionStore(allowVolatileFallback: true);
+      final session = _session();
+
+      final firstClientUid = await store.readOrCreateClientUid();
+      await store.writeSession(session);
+
+      expect(await store.readOrCreateClientUid(), firstClientUid);
+      final restored = await store.readSession();
+      expect(restored?.accessToken, session.accessToken);
+      expect(restored?.accountUid, session.accountUid);
+    },
+  );
 
   test(
     'captures an operating-system share emitted during initialization',

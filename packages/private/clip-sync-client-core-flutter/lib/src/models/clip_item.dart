@@ -11,6 +11,7 @@ class ClipItem {
     required this.mimeType,
     required this.sizeBytes,
     required this.sourcePlatform,
+    required this.sourceDeviceName,
     required this.createdAt,
     this.text,
     this.imageBytes,
@@ -22,6 +23,9 @@ class ClipItem {
     mimeType: json['mimeType']! as String,
     sizeBytes: json['sizeBytes']! as int,
     sourcePlatform: json['sourcePlatform']! as String,
+    sourceDeviceName:
+        json['sourceDeviceName'] as String? ??
+        _platformDisplayName(json['sourcePlatform']! as String),
     createdAt: DateTime.parse(json['createdAt']! as String).toLocal(),
     text: json['text'] as String?,
     imageBytes: json['imageBase64'] == null
@@ -34,6 +38,7 @@ class ClipItem {
   final String mimeType;
   final int sizeBytes;
   final String sourcePlatform;
+  final String sourceDeviceName;
   final DateTime createdAt;
   final String? text;
   final Uint8List? imageBytes;
@@ -54,6 +59,14 @@ class ClipItem {
     return sha256.convert(bytes).toString();
   }
 }
+
+String _platformDisplayName(String platform) => switch (platform) {
+  'android' => 'Android',
+  'ios' => 'iOS',
+  'macos' => 'macOS',
+  'windows' => 'Windows',
+  _ => platform,
+};
 
 /// A page of history and its server-provided pagination state.
 class ClipItemPage {

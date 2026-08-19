@@ -97,6 +97,82 @@ paths:
                   items: { type: array, items: { $ref: '#/components/schemas/ClipboardItem' } }
                   pagination: { $ref: '#/components/schemas/Pagination' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+  /devices:
+    get:
+      summary: List the authenticated account's devices
+      operationId: listDevices
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Account-owned devices with their current display names
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [devices]
+                properties:
+                  devices: { type: array, items: { $ref: '#/components/schemas/Device' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /devices/register:
+    post:
+      summary: Register or refresh the current installed device
+      operationId: registerDevice
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [clientUid, platform, name]
+              properties:
+                clientUid: { $ref: '#/components/schemas/Uid' }
+                platform: { $ref: '#/components/schemas/Platform' }
+                name: { type: string, minLength: 1, maxLength: 100 }
+      responses:
+        '200':
+          description: Registered device with its current effective name
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [device]
+                properties:
+                  device: { $ref: '#/components/schemas/Device' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /devices/{deviceUid}:
+    parameters:
+      - name: deviceUid
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/Uid' }
+    patch:
+      summary: Rename one device owned by the authenticated account
+      operationId: renameDevice
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 100 }
+      responses:
+        '200':
+          description: Renamed device
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [device]
+                properties:
+                  device: { $ref: '#/components/schemas/Device' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /items:
     post:
       summary: Persist and deliver a clipboard item
@@ -184,6 +260,13 @@ components:
     Platform:
       type: string
       enum: [windows, macos, ios, android]
+    Device:
+      type: object
+      required: [uid, name, platform]
+      properties:
+        uid: { $ref: '#/components/schemas/Uid' }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        platform: { $ref: '#/components/schemas/Platform' }
     Account:
       type: object
       required: [uid, email, clipboardUid]
@@ -193,13 +276,14 @@ components:
         clipboardUid: { $ref: '#/components/schemas/Uid' }
     ClipboardItem:
       type: object
-      required: [uid, kind, mimeType, sizeBytes, sourcePlatform, createdAt]
+      required: [uid, kind, mimeType, sizeBytes, sourcePlatform, sourceDeviceName, createdAt]
       properties:
         uid: { $ref: '#/components/schemas/Uid' }
         kind: { type: string, enum: [text, image] }
         mimeType: { type: string, enum: [text/plain, image/png, image/jpeg, image/webp] }
         sizeBytes: { type: integer, minimum: 1 }
         sourcePlatform: { $ref: '#/components/schemas/Platform' }
+        sourceDeviceName: { type: string, minLength: 1, maxLength: 100 }
         createdAt: { type: string, format: date-time }
         text: { type: string, description: Present for text items }
         imageBase64:
@@ -256,7 +340,7 @@ components:
       description: Missing, expired, or invalid authentication
       content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
     NotFound:
-      description: Item absent or belongs to another account
+      description: Resource absent or belongs to another account
       content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
     RateLimited:
       description: Too many sign-in requests

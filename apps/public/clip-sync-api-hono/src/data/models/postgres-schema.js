@@ -88,6 +88,28 @@ export const clipboard = core.table(
   ],
 );
 
+export const device = core.table(
+  'device',
+  {
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+    uid: char('uid', { length: 32 }).notNull(),
+    accountId: integer('account_id')
+      .notNull()
+      .references(() => account.id),
+    platform: varchar('platform', { length: 20 }).notNull(),
+    reportedName: varchar('reported_name', { length: 100 }).notNull(),
+    customName: varchar('custom_name', { length: 100 }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    unique('uk_device_uid').on(table.uid),
+    index('idx_device_account_id_deleted_at').on(table.accountId, table.deletedAt),
+    check('ck_device_platform', sql`${table.platform} IN ('windows', 'macos', 'ios', 'android')`),
+  ],
+);
+
 export const loginCode = authEvent.table(
   'login_code',
   {
@@ -132,6 +154,7 @@ export const postgresTables = Object.freeze({
   accountIdentifier,
   authenticationProvider,
   clipboard,
+  device,
   deliveryEvent,
   loginCode,
 });

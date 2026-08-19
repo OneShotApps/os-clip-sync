@@ -125,6 +125,8 @@ There is no administrator user type or cross-account sharing role described for 
 3. The user selects an earlier item.
 4. The client copies the selected item into that device's local operating system clipboard.
 5. The user can delete an unwanted history item through the UI.
+6. Each history item identifies the device that created it by the device's current display name.
+7. The user can open device management and rename any device owned by the account.
 
 **Rules and constraints:**
 
@@ -133,6 +135,8 @@ There is no administrator user type or cross-account sharing role described for 
 - Browsing and manually copying history are available on Windows, macOS, iOS, and Android.
 - Persisted history does not cause automatic catch-up synchronization when an offline client reconnects.
 - Clipboard content is stored in MongoDB rather than persisted in the client application.
+- Each client registers its operating-system-reported device name. An account-assigned rename is reflected in history on every other device's next refresh.
+- Device listing and renaming are restricted to the authenticated account.
 - While the iOS or macOS history screen is visible, it refreshes every 5 seconds for the first 30 seconds, then every 30 seconds. Automatic refresh pauses after 2 minutes and shows a visible paused indicator until the user presses Refresh, which reloads history and restarts the schedule.
 
 ### Mobile clipboard access
@@ -301,8 +305,10 @@ The conceptual data model contains the following information:
 
 - The hosted service has multiple accounts.
 - Each account owns one and only one top-level clipboard.
+- Each account owns its registered Clip Sync devices and may assign each one a display name.
 - Each clipboard belongs to one account and contains that account's persisted clipboard-item history.
 - A clipboard item contains text or blob content, such as a photo, stored in MongoDB.
+- New clipboard items retain the stable source-device UID so history can resolve the device's current display name.
 - PostgreSQL supports the account security and backend event-handling responsibilities associated with authenticated access and item propagation.
 - An authenticated client acts on the clipboard owned by its account.
 - Windows and Mac clients may have an online connection through which the backend delivers newly received items.

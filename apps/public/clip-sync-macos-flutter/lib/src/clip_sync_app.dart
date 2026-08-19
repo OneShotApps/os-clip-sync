@@ -2,6 +2,8 @@ import 'package:clip_sync_client_core/clip_sync_client_core.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'device_manager_dialog.dart';
+
 /// macOS presentation shell. Domain and transport behavior remain in client core.
 class ClipSyncApp extends StatelessWidget {
   const ClipSyncApp({required this.controller, super.key});
@@ -292,6 +294,13 @@ class _HistoryScreenState extends State<_HistoryScreen> with WindowListener {
     appBar: AppBar(
       title: const Text('Clip Sync'),
       actions: [
+        IconButton(
+          onPressed: controller.isBusy
+              ? null
+              : () => showDeviceManagerDialog(context, controller),
+          tooltip: 'Manage devices',
+          icon: const Icon(Icons.devices_outlined),
+        ),
         Tooltip(
           message: controller.isPaused
               ? 'Resume synchronization'
@@ -436,7 +445,7 @@ class _HistoryScreenState extends State<_HistoryScreen> with WindowListener {
                               overflow: TextOverflow.ellipsis,
                             ),
                             subtitle: Text(
-                              '${item.sourcePlatform} • ${item.createdAt}',
+                              '${item.sourceDeviceName} • ${item.createdAt}',
                             ),
                             onTap: () async {
                               try {

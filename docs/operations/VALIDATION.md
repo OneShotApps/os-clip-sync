@@ -13,7 +13,7 @@ bun run openapi:lint
 bun run test
 ```
 
-Unit tests cover configuration, structured routes/errors, authorization middleware behavior, and online-only real-time routing. With the local Compose stack healthy, run `bun run test:integration` to exercise email authentication, account isolation, create/list/get/delete, and WebSocket source exclusion against real PostgreSQL and MongoDB containers.
+Unit tests cover configuration, structured routes/errors, authorization middleware behavior, device registration validation, and online-only real-time routing. With the local Compose stack healthy, run `bun run test:integration` to exercise email authentication, account isolation, device registration and rename propagation, create/list/get/delete, and WebSocket source exclusion against real PostgreSQL and MongoDB containers.
 
 ## Flutter package and apps
 
@@ -32,7 +32,7 @@ flutter build windows --release --dart-define=CLIP_SYNC_API_URL=https://api.exam
 msbuild windows/packaging/Package.wapproj /p:Configuration=Release /p:Platform=x64
 ```
 
-Install signed target builds and manually confirm email and Google sign-in, text/photo copy, share target invocation, history pagination, deletion, tray/menu pause, resume baseline, cross-account denial, and online-only delivery. Test Windows 11, current macOS, current iOS, and a supported Android version because native share and clipboard integrations cannot be proven by Dart widget tests.
+Install signed target builds and manually confirm email and Google sign-in, text/photo copy, share target invocation, history pagination, deletion, tray/menu pause, resume baseline, cross-account denial, and online-only delivery. Also confirm that a new macOS copy shows the Mac's System Settings name, rename that Mac from another app's Devices control, and verify the renamed source label appears after the next history refresh on every open client. Test Windows 11, current macOS, current iOS, and a supported Android version because native device-name, share, and clipboard integrations cannot be proven by Dart widget tests.
 
 ## Compose
 

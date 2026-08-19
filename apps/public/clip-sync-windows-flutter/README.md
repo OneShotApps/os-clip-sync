@@ -1,6 +1,6 @@
 # Clip Sync for Windows 11
 
-This resident target-specific Flutter application monitors text and photos while active, receives live items into the clipboard, offers history/copy/delete, and exposes Pause, Show, and Quit in the system tray. Closing the window keeps the user-level process running.
+This resident target-specific Flutter application monitors text and photos while active, receives live items into the clipboard, offers history/copy/delete, and exposes Pause, Show, and Quit in the system tray. It registers the Windows computer name, displays current source-device names in history, and can rename any account-owned device from the Devices control. Closing the window keeps the user-level process running.
 
 Build on Windows 11 with Flutter, Visual Studio's Desktop C++ workload, the Universal Windows Platform workload, and MSBuild:
 

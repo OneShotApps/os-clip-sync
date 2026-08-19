@@ -5,6 +5,7 @@ import { loadConfig } from './config.js';
 import { closeDatabases, connectDatabases } from './data/db.js';
 import { createAuthService } from './services/auth-service.js';
 import { createClipboardService } from './services/clipboard-service.js';
+import { createDeviceService } from './services/device-service.js';
 import { createEmailService } from './services/email-service.js';
 import { createRealtimeHub } from './services/realtime-hub.js';
 
@@ -17,11 +18,13 @@ const authService = createAuthService({
   config,
   emailService: createEmailService(config.smtp),
 });
-const clipboardService = createClipboardService({ realtimeHub });
+const deviceService = createDeviceService();
+const clipboardService = createClipboardService({ realtimeHub, deviceService });
 const app = createApp({
   config,
   authService,
   clipboardService,
+  deviceService,
   realtimeHub,
   upgradeWebSocket,
 });

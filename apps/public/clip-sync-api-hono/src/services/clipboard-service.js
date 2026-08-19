@@ -2,6 +2,7 @@ import { IMAGE_MIME_TYPES, MAX_IMAGE_BYTES, MAX_TEXT_BYTES, PLATFORMS } from '..
 import { compensateClipboardItemCreate } from '../data/db.js';
 import { clipboardItems, deliveryEvents } from '../data/repos/index.js';
 import { AppError, ERROR_CODES } from '../errors.js';
+import { platformDisplayName } from './device-service.js';
 
 export function clipboardImageBuffer(value) {
   if (Buffer.isBuffer(value)) return value;
@@ -12,13 +13,14 @@ export function clipboardImageBuffer(value) {
   throw new Error('Persisted image bytes are unavailable.');
 }
 
-function publicItem(document, { includeContent = false } = {}) {
+function publicItem(document, { includeContent = false, sourceDeviceName } = {}) {
   const item = {
     uid: document.uid,
     kind: document.kind,
     mimeType: document.mimeType,
     sizeBytes: document.sizeBytes,
     sourcePlatform: document.sourcePlatform,
+    sourceDeviceName: sourceDeviceName ?? platformDisplayName(document.sourcePlatform),
     createdAt: new Date(document.createdAt).toISOString(),
   };
   if (document.kind === 'text') item.text = document.text;
@@ -70,7 +72,27 @@ export function prepareContent({ kind, text, imageBase64, mimeType }) {
 }
 
 /** Creates owner-scoped clipboard history operations and live desktop delivery. */
-export function createClipboardService({ realtimeHub }) {
+export function createClipboardService({ realtimeHub, deviceService }) {
+  async function sourceNameMap({ auth, documents }) {
+    const deviceNames = await deviceService.nameMap({ auth });
+    const missingItemUids = documents
+      .filter((document) => !document.sourceClientUid)
+      .map((document) => document.uid);
+    const legacyEvents = await deliveryEvents.findDeliveryEventsByItemUids({
+      accountUid: auth.accountUid,
+      itemUids: missingItemUids,
+    });
+    const legacySourceUids = new Map(
+      legacyEvents.map((event) => [event.itemUid, event.sourceClientUid]),
+    );
+    return new Map(
+      documents.map((document) => {
+        const sourceClientUid = document.sourceClientUid ?? legacySourceUids.get(document.uid);
+        return [document.uid, deviceNames.get(sourceClientUid)];
+      }),
+    );
+  }
+
   return {
     /** Stores one item, records its event, then notifies other online desktop clients. */
     async createItem({ auth, clientUid, sourcePlatform, kind, text, imageBase64, mimeType }) {
@@ -87,6 +109,7 @@ export function createClipboardService({ realtimeHub }) {
         clipboardUid: auth.clipboardUid,
         kind,
         sourcePlatform,
+        sourceClientUid: clientUid,
         ...content,
       });
       try {
@@ -101,7 +124,11 @@ export function createClipboardService({ realtimeHub }) {
         await compensateClipboardItemCreate({ accountUid: auth.accountUid, itemUid: document.uid });
         throw error;
       }
-      const item = publicItem(document, { includeContent: true });
+      const sourceNames = await sourceNameMap({ auth, documents: [document] });
+      const item = publicItem(document, {
+        includeContent: true,
+        sourceDeviceName: sourceNames.get(document.uid),
+      });
       realtimeHub.broadcast({
         accountUid: auth.accountUid,
         sourceClientUid: clientUid,
@@ -117,8 +144,11 @@ export function createClipboardService({ realtimeHub }) {
         page,
         pageSize,
       });
+      const sourceNames = await sourceNameMap({ auth, documents: items });
       return {
-        items: items.map((item) => publicItem(item)),
+        items: items.map((item) =>
+          publicItem(item, { sourceDeviceName: sourceNames.get(item.uid) }),
+        ),
         pagination: {
           page,
           pageSize,
@@ -137,7 +167,11 @@ export function createClipboardService({ realtimeHub }) {
       if (!document) {
         throw new AppError(404, ERROR_CODES.itemNotFound, 'Clipboard item was not found.');
       }
-      return publicItem(document, { includeContent: true });
+      const sourceNames = await sourceNameMap({ auth, documents: [document] });
+      return publicItem(document, {
+        includeContent: true,
+        sourceDeviceName: sourceNames.get(document.uid),
+      });
     },
 
     /** Soft deletes one owner-scoped history item. */

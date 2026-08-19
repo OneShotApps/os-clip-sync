@@ -7,6 +7,7 @@ import 'package:web_socket_channel/status.dart' as status;
 
 import '../models/auth_session.dart';
 import '../models/clip_item.dart';
+import '../models/sync_device.dart';
 import 'api_exception.dart';
 
 /// Connection wrapper that lets desktop synchronization close a WebSocket cleanly.
@@ -106,6 +107,42 @@ class ClipSyncApiClient {
       page: pagination['page']! as int,
       totalPages: pagination['totalPages']! as int,
     );
+  }
+
+  Future<SyncDevice> registerDevice({
+    required AuthSession session,
+    required String clientUid,
+    required String platform,
+    required String name,
+  }) async {
+    final response = await _request(
+      'POST',
+      '/ux/v1/devices/register',
+      session: session,
+      body: {'clientUid': clientUid, 'platform': platform, 'name': name},
+    );
+    return SyncDevice.fromJson(response['device']! as Map<String, dynamic>);
+  }
+
+  Future<List<SyncDevice>> listDevices(AuthSession session) async {
+    final response = await _request('GET', '/ux/v1/devices', session: session);
+    return (response['devices']! as List<dynamic>)
+        .map((device) => SyncDevice.fromJson(device! as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<SyncDevice> renameDevice({
+    required AuthSession session,
+    required String deviceUid,
+    required String name,
+  }) async {
+    final response = await _request(
+      'PATCH',
+      '/ux/v1/devices/$deviceUid',
+      session: session,
+      body: {'name': name},
+    );
+    return SyncDevice.fromJson(response['device']! as Map<String, dynamic>);
   }
 
   Future<ClipItem> getItem(AuthSession session, String itemUid) async {

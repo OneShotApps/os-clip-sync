@@ -4,6 +4,8 @@ import 'package:clip_sync_client_core/clip_sync_client_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'src/device_manager_sheet.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -19,6 +21,7 @@ Future<void> main() async {
     googleAuthService: GoogleAuthService(sessionStore: sessionStore),
     clipboard: ClipboardAdapter(),
     shareReceiver: ShareReceiver(),
+    deviceNameProvider: DeviceNameProvider(),
     platform: 'android',
     isDesktop: false,
   );
@@ -275,6 +278,13 @@ class _MobileHistoryScreen extends StatelessWidget {
       title: const Text('Clipboard history'),
       actions: [
         IconButton(
+          onPressed: controller.isBusy
+              ? null
+              : () => showDeviceManagerSheet(context, controller),
+          tooltip: 'Manage devices',
+          icon: const Icon(Icons.devices_outlined),
+        ),
+        IconButton(
           onPressed: _signOut,
           tooltip: 'Sign out',
           icon: const Icon(Icons.logout),
@@ -344,7 +354,7 @@ class _MobileHistoryScreen extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           subtitle: Text(
-                            '${item.sourcePlatform} • ${item.createdAt}',
+                            '${item.sourceDeviceName} • ${item.createdAt}',
                           ),
                           onTap: () => _copy(context, item),
                           onLongPress: () => _delete(context, item),

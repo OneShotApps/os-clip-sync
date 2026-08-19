@@ -14,6 +14,7 @@ void main() {
       googleAuthService: GoogleAuthService(sessionStore: sessionStore),
       clipboard: ClipboardAdapter(),
       shareReceiver: ShareReceiver(),
+      deviceNameProvider: DeviceNameProvider(),
       platform: 'ios',
       isDesktop: false,
     );
@@ -34,6 +35,7 @@ void main() {
       googleAuthService: GoogleAuthService(sessionStore: sessionStore),
       clipboard: ClipboardAdapter(),
       shareReceiver: _FakeShareReceiver(),
+      deviceNameProvider: _FakeDeviceNameProvider(),
       platform: 'ios',
       isDesktop: false,
     );
@@ -44,12 +46,25 @@ void main() {
       ClipSyncMobileApp(controller: controller, platformName: 'iOS'),
     );
     expect(find.byTooltip('Refresh history'), findsOneWidget);
+    expect(find.byTooltip('Manage devices'), findsOneWidget);
     expect(apiClient.historyRequestCount, 1);
 
     await tester.tap(find.byTooltip('Refresh history'));
     await tester.pumpAndSettle();
 
     expect(apiClient.historyRequestCount, 2);
+
+    await tester.tap(find.byTooltip('Manage devices'));
+    await tester.pumpAndSettle();
+    expect(find.text('Other Mac'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Rename Other Mac'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Home Mac');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Home Mac'), findsOneWidget);
   });
 }
 
@@ -75,6 +90,27 @@ class _FakeApiClient extends ClipSyncApiClient {
   int historyRequestCount = 0;
 
   @override
+  Future<SyncDevice> registerDevice({
+    required AuthSession session,
+    required String clientUid,
+    required String platform,
+    required String name,
+  }) async => SyncDevice(uid: clientUid, name: name, platform: platform);
+
+  @override
+  Future<List<SyncDevice>> listDevices(AuthSession session) async => [
+    SyncDevice(uid: 'C' * 32, name: 'Test iPhone', platform: 'ios'),
+    SyncDevice(uid: 'D' * 32, name: 'Other Mac', platform: 'macos'),
+  ];
+
+  @override
+  Future<SyncDevice> renameDevice({
+    required AuthSession session,
+    required String deviceUid,
+    required String name,
+  }) async => SyncDevice(uid: deviceUid, name: name, platform: 'macos');
+
+  @override
   Future<ClipItemPage> listHistory(
     AuthSession session, {
     required int page,
@@ -83,6 +119,11 @@ class _FakeApiClient extends ClipSyncApiClient {
     historyRequestCount += 1;
     return const ClipItemPage(items: [], page: 1, totalPages: 1);
   }
+}
+
+class _FakeDeviceNameProvider extends DeviceNameProvider {
+  @override
+  Future<String> readName(String platform) async => 'Test iPhone';
 }
 
 class _FakeShareReceiver extends ShareReceiver {

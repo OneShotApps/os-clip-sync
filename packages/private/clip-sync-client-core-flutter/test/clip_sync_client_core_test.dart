@@ -32,6 +32,7 @@ void main() {
       mimeType: 'text/plain',
       sizeBytes: utf8.encode('hello world').length,
       sourcePlatform: 'windows',
+      sourceDeviceName: 'Office PC',
       createdAt: DateTime.utc(2026, 8, 18),
       text: 'hello   world',
     );
@@ -81,6 +82,7 @@ void main() {
         googleAuthService: GoogleAuthService(sessionStore: store),
         clipboard: ClipboardAdapter(),
         shareReceiver: shares,
+        deviceNameProvider: _FakeDeviceNameProvider(),
         platform: 'android',
         isDesktop: false,
       );
@@ -103,6 +105,7 @@ void main() {
       googleAuthService: GoogleAuthService(sessionStore: store),
       clipboard: ClipboardAdapter(),
       shareReceiver: _FakeShareReceiver(),
+      deviceNameProvider: _FakeDeviceNameProvider(),
       platform: 'ios',
       isDesktop: false,
     );
@@ -116,6 +119,42 @@ void main() {
     expect(controller.items, hasLength(1));
     expect(controller.items.single.text, 'new item');
   });
+
+  test(
+    'registers the OS name and refreshes history after renaming a device',
+    () async {
+      final session = _session();
+      final store = _FakeSessionStore(session);
+      final api = _FakeApiClient()..historyText = 'named item';
+      final controller = ClipSyncController(
+        apiClient: api,
+        sessionStore: store,
+        googleAuthService: GoogleAuthService(sessionStore: store),
+        clipboard: ClipboardAdapter(),
+        shareReceiver: _FakeShareReceiver(),
+        deviceNameProvider: _FakeDeviceNameProvider(),
+        platform: 'ios',
+        isDesktop: false,
+      );
+      addTearDown(controller.dispose);
+
+      await controller.initialize();
+      expect(api.registeredName, 'Test device');
+      await controller.refreshDevices();
+      final otherDevice = controller.devices.firstWhere(
+        (device) => device.uid == 'E' * 32,
+      );
+      final historyRequestsBeforeRename = api.historyRequestCount;
+
+      await controller.renameDevice(otherDevice, 'Travel phone');
+
+      expect(
+        controller.devices.firstWhere((device) => device.uid == 'E' * 32).name,
+        'Travel phone',
+      );
+      expect(api.historyRequestCount, historyRequestsBeforeRename + 1);
+    },
+  );
 
   testWidgets(
     'history refresh slows down, pauses, and resumes after manual refresh',
@@ -177,6 +216,7 @@ ClipItem _textItem(String text, int sequence) => ClipItem(
   mimeType: 'text/plain',
   sizeBytes: utf8.encode(text).length,
   sourcePlatform: 'android',
+  sourceDeviceName: 'Pixel',
   createdAt: DateTime.utc(2026, 8, 18),
   text: text,
 );
@@ -202,19 +242,62 @@ class _FakeApiClient extends ClipSyncApiClient {
   _FakeApiClient() : super(baseUrl: 'http://example.test');
 
   final List<String> createdTexts = [];
+  final List<SyncDevice> accountDevices = [
+    SyncDevice(uid: 'E' * 32, name: 'Other phone', platform: 'android'),
+  ];
   String? historyText;
+  String? registeredName;
+  int historyRequestCount = 0;
   int _sequence = 1;
+
+  @override
+  Future<SyncDevice> registerDevice({
+    required AuthSession session,
+    required String clientUid,
+    required String platform,
+    required String name,
+  }) async {
+    registeredName = name;
+    final device = SyncDevice(uid: clientUid, name: name, platform: platform);
+    accountDevices.add(device);
+    return device;
+  }
+
+  @override
+  Future<List<SyncDevice>> listDevices(AuthSession session) async =>
+      List<SyncDevice>.from(accountDevices);
+
+  @override
+  Future<SyncDevice> renameDevice({
+    required AuthSession session,
+    required String deviceUid,
+    required String name,
+  }) async {
+    final index = accountDevices.indexWhere(
+      (device) => device.uid == deviceUid,
+    );
+    final renamed = SyncDevice(
+      uid: deviceUid,
+      name: name,
+      platform: accountDevices[index].platform,
+    );
+    accountDevices[index] = renamed;
+    return renamed;
+  }
 
   @override
   Future<ClipItemPage> listHistory(
     AuthSession session, {
     required int page,
     int pageSize = 50,
-  }) async => ClipItemPage(
-    items: historyText == null ? [] : [_textItem(historyText!, _sequence++)],
-    page: 1,
-    totalPages: 1,
-  );
+  }) async {
+    historyRequestCount += 1;
+    return ClipItemPage(
+      items: historyText == null ? [] : [_textItem(historyText!, _sequence++)],
+      page: 1,
+      totalPages: 1,
+    );
+  }
 
   @override
   Future<ClipItem> createTextItem({
@@ -226,6 +309,11 @@ class _FakeApiClient extends ClipSyncApiClient {
     createdTexts.add(text);
     return _textItem(text, _sequence++);
   }
+}
+
+class _FakeDeviceNameProvider extends DeviceNameProvider {
+  @override
+  Future<String> readName(String platform) async => 'Test device';
 }
 
 class _FakeShareReceiver extends ShareReceiver {

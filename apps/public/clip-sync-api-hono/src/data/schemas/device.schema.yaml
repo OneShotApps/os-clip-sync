@@ -1,0 +1,54 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://clip-sync.local/schemas/device.schema.yaml
+title: Device
+description: One account-owned Clip Sync installation with an operating-system name and optional user rename.
+type: object
+additionalProperties: false
+required: [uid, accountId, platform, reportedName, createdAt, updatedAt, deletedAt]
+properties:
+  uid:
+    type: string
+    pattern: ^[A-F0-9]{32}$
+    description: Stable client UID generated once by the installed application.
+  accountId:
+    type: integer
+    minimum: 1
+  platform:
+    type: string
+    enum: [windows, macos, ios, android]
+  reportedName:
+    type: string
+    minLength: 1
+    maxLength: 100
+  customName:
+    type: [string, 'null']
+    minLength: 1
+    maxLength: 100
+    description: Account-assigned name. Null means the operating-system-reported name is displayed.
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  deletedAt:
+    type: string
+    format: date-time
+x-storage:
+  engine: postgresql
+  schema: clip_sync_core
+  table: device
+  classification: entity
+  zeroDate: '1700-01-01T00:00:00.000Z'
+  relationships:
+    - field: account_id
+      references: clip_sync_core.account.id
+  constraints:
+    - name: uk_device_uid
+      unique: true
+      fields: [uid]
+    - name: ck_device_platform
+      fields: [platform]
+  indexes:
+    - name: idx_device_account_id_deleted_at
+      fields: [account_id, deleted_at]

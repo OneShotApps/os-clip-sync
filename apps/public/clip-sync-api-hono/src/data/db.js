@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import mongoose from 'mongoose';
 import postgres from 'postgres';
@@ -70,6 +70,26 @@ export async function findOneByData({
     .where(conditions.length === 1 ? conditions[0] : and(...conditions))
     .limit(1);
   return rows[0] ?? null;
+}
+
+/**
+ * Finds active PostgreSQL records using repository-owned criteria.
+ *
+ * @param {object} payload - Generic repository query.
+ * @returns {Promise<object[]>} Matching records.
+ */
+export async function findManyByData({
+  table: tableName,
+  data,
+  includeDeleted = false,
+  executor = database,
+}) {
+  const table = getPostgresTable(tableName);
+  const conditions = makeConditions(table, data, includeDeleted);
+  return executor
+    .select()
+    .from(table)
+    .where(conditions.length === 1 ? conditions[0] : and(...conditions));
 }
 
 /**
@@ -197,4 +217,19 @@ export async function findDeliveryEvents({ accountUid, limit }) {
     .where(eq(table.accountUid, accountUid))
     .orderBy(desc(table.createdAt))
     .limit(limit);
+}
+
+/**
+ * Finds source-client metadata for a known set of owner-scoped clipboard items.
+ *
+ * @param {{accountUid: string, itemUids: string[]}} payload - Owner and item UIDs.
+ * @returns {Promise<object[]>} Matching delivery event rows.
+ */
+export async function findDeliveryEventsByItemUids({ accountUid, itemUids }) {
+  if (itemUids.length === 0) return [];
+  const table = postgresTables.deliveryEvent;
+  return database
+    .select()
+    .from(table)
+    .where(and(eq(table.accountUid, accountUid), inArray(table.itemUid, itemUids)));
 }

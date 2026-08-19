@@ -21,6 +21,7 @@ const clipboardItemSchema = new mongoose.Schema(
       enum: ['windows', 'macos', 'ios', 'android'],
       immutable: true,
     },
+    sourceClientUid: { type: String, immutable: true },
     createdAt: { type: Number, required: true, min: 1, immutable: true },
     deletedAt: { type: Number, required: true, min: 0 },
   },

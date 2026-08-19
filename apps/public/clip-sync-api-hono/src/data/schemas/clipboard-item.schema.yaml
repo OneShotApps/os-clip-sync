@@ -44,6 +44,10 @@ properties:
   sourcePlatform:
     type: string
     enum: [windows, macos, ios, android]
+  sourceClientUid:
+    type: string
+    pattern: ^[A-F0-9]{32}$
+    description: Stable source device identity. Legacy documents may omit this field.
   createdAt:
     type: integer
     minimum: 1

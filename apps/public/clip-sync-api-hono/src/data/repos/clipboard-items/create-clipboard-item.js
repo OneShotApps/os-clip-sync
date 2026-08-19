@@ -2,7 +2,7 @@ import { createUid, isUid } from '../../../utils/uid.js';
 import { createClipboardItemDocument } from '../../db.js';
 
 function validate(values) {
-  if (!isUid(values.accountUid) || !isUid(values.clipboardUid)) {
+  if (!isUid(values.accountUid) || !isUid(values.clipboardUid) || !isUid(values.sourceClientUid)) {
     throw new Error('Valid ownership UIDs are required.');
   }
   if (!['text', 'image'].includes(values.kind)) {

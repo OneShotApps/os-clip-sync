@@ -7,6 +7,7 @@ export const ERROR_CODES = Object.freeze({
   codeAttemptsExceeded: 'CLIP_SYNC_EMAIL_CODE_ATTEMPTS_EXCEEDED',
   googleIdentityInvalid: 'CLIP_SYNC_GOOGLE_IDENTITY_INVALID',
   itemNotFound: 'CLIP_SYNC_ITEM_NOT_FOUND',
+  deviceNotFound: 'CLIP_SYNC_DEVICE_NOT_FOUND',
   contentTooLarge: 'CLIP_SYNC_CONTENT_TOO_LARGE',
   unsupportedContent: 'CLIP_SYNC_UNSUPPORTED_CONTENT',
   rateLimited: 'CLIP_SYNC_RATE_LIMITED',

@@ -1,6 +1,6 @@
 # Clip Sync client core
 
-This private Flutter package contains only behavior shared by the four delivered clients: typed API calls, secure session storage, Google sign-in, text/photo clipboard access, operating-system share intake, presentation state, and desktop polling/WebSocket synchronization.
+This private Flutter package contains only behavior shared by the four delivered clients: typed API calls, secure session storage, Google sign-in, operating-system device-name discovery, account device renaming, text/photo clipboard access, operating-system share intake, presentation state, and desktop polling/WebSocket synchronization.
 
 It is intentionally not a reusable framework. Platform presentation and native tray, menu, and share-target resources remain inside each application.
 
@@ -11,4 +11,4 @@ flutter analyze
 flutter test
 ```
 
-`ClipSyncController` is the UI-facing state boundary. `HistoryRefreshScheduler` provides the shared fast, slow, paused, and manual-resume timing used by visible history screens. `DesktopSyncController` is instantiated only by Windows and macOS clients; iOS and Android never monitor or automatically update their clipboards. The package stores only authentication state, a random client UID, and the Google access token in operating-system secure storage. It does not persist clipboard content or history.
+`ClipSyncController` is the UI-facing state boundary. It registers the stable client UID with the current operating-system name after authentication and exposes account-scoped device list/rename operations. `HistoryRefreshScheduler` provides the shared fast, slow, paused, and manual-resume timing used by visible history screens. `DesktopSyncController` is instantiated only by Windows and macOS clients; iOS and Android never monitor or automatically update their clipboards. The package stores only authentication state, a random client UID, and the Google access token in operating-system secure storage. It does not persist clipboard content or history.

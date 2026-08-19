@@ -1,6 +1,6 @@
 # Clip Sync for iOS
 
-This target-specific Flutter application browses, copies, refreshes, and deletes private history. Its native Share Extension accepts text and photos. It never monitors or automatically changes the mobile clipboard.
+This target-specific Flutter application browses, copies, refreshes, and deletes private history. Its Devices control lists and renames account-owned devices, and history shows the current source-device name. Its native Share Extension accepts text and photos. It never monitors or automatically changes the mobile clipboard.
 
 While clipboard history is visible, the app refreshes every 5 seconds for 30 seconds, then every 30 seconds. Automatic refresh pauses after 2 minutes and displays a notice. Press the refresh button or pull down on the history list to refresh immediately and restart the schedule.
 

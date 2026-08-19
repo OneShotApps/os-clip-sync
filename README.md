@@ -1,6 +1,6 @@
 # Clip Sync
 
-Clip Sync is a proof-of-concept hosted clipboard service for Windows 11, macOS, iOS, and Android. The desktop applications automatically exchange text and photos while online. Every client can browse the account's private server-backed history, copy an older item, delete it, and receive operating-system share actions.
+Clip Sync is a proof-of-concept hosted clipboard service for Windows 11, macOS, iOS, and Android. The desktop applications automatically exchange text and photos while online. Every client can browse the account's private server-backed history, copy an older item, delete it, receive operating-system share actions, and rename account devices. History identifies new items by the source device's operating-system name or its account-assigned rename.
 
 Visible iOS and macOS history screens automatically refresh every 5 seconds for 30 seconds, then every 30 seconds until pausing at 2 minutes. The paused indicator remains visible until the user presses Refresh, which immediately reloads history and restarts the schedule.
 
@@ -73,4 +73,4 @@ Run the same `flutter analyze` and `flutter test` commands in each client folder
 
 ## Privacy and operating model
 
-An account owns exactly one private clipboard. Authorization always derives the clipboard from the signed token; clients never choose an account or clipboard identifier. PostgreSQL stores account, authentication, and delivery-event data. MongoDB stores clipboard text and image bytes. Clients retain only the session, client identifier, and optional Google credential in platform secure storage; history remains server-backed.
+An account owns exactly one private clipboard and its registered devices. Authorization always derives ownership from the signed token; clients never choose an account or clipboard identifier. PostgreSQL stores account, device-name, authentication, and delivery-event data. MongoDB stores clipboard text and image bytes plus the stable source-device UID used for display-name resolution. Clients retain only the session, client identifier, and optional Google credential in platform secure storage; history remains server-backed.

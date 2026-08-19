@@ -13,6 +13,7 @@ This is the implementation audit for `docs/concepts/REQUIREMENTS.md` version 1.0
 | Last server-received item wins | Create route persists each accepted item and broadcasts immediately in request completion order; no conflict layer is present. |
 | Pause privacy boundary | Desktop controller stops polling while paused and baselines the current clipboard on resume, so paused content is never uploaded later. |
 | Server-backed indefinite history | MongoDB text/photo documents have no automatic expiry, newest-first pagination, owner-scoped detail, and soft deletion. Clients store no history database. |
+| Device names and account-owned renaming | OS-backed device-name provider, stable client UID registration, account-scoped PostgreSQL device registry, source UID on new MongoDB items, dynamically resolved history labels, and rename controls in all four apps. |
 | Browse, manual copy, and delete on every target | Shared controller and target-specific Windows/macOS/iOS/Android history screens; photo detail is loaded only when copied. |
 | Adaptive visible-history refresh on iOS and macOS | Shared `HistoryRefreshScheduler`, target lifecycle/window visibility hooks, manual restart controls, and target-specific paused indicators. |
 | No automatic mobile monitoring or incoming clipboard writes | iOS and Android instantiate no desktop sync controller or WebSocket and modify the clipboard only after a user taps Copy. |
@@ -27,4 +28,4 @@ This is the implementation audit for `docs/concepts/REQUIREMENTS.md` version 1.0
 | Single EC2 Compose deployment | Production runbook covers immutable tags, secrets, TLS/WebSocket proxying, health validation, backups, troubleshooting, rolling corrective releases, and safe stop behavior. |
 | Junior-readable operation and maintenance | Root/app/package READMEs, architecture/data decisions, OpenAPI 3.1 contract, YAML persisted schemas, deployment and validation runbooks, focused modules, and JSDoc on shared backend boundaries. |
 
-The unresolved product questions from the draft requirements are closed conservatively in `docs/architecture/DECISIONS.md`. No out-of-scope sharing, administration, payments, device management, mobile monitoring, reconnect replay, or client-side history store was added.
+The unresolved product questions from the draft requirements are closed conservatively in `docs/architecture/DECISIONS.md`. Device naming and renaming are the only approved device-management behavior; no sharing, administration, payments, device revocation, mobile monitoring, reconnect replay, or client-side history store was added.

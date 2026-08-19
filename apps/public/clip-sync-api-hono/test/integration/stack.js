@@ -1,8 +1,13 @@
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 
+import mongoose from 'mongoose';
+
 const apiUrl = process.env.CLIP_SYNC_INTEGRATION_API_URL ?? 'http://127.0.0.1:4200';
 const mailpitUrl = process.env.CLIP_SYNC_INTEGRATION_MAILPIT_URL ?? 'http://127.0.0.1:8025';
+const mongoUrl =
+  process.env.CLIP_SYNC_INTEGRATION_MONGO_URL ??
+  'mongodb://clip_sync:local-mongo-password@127.0.0.1:27017/clip_sync?authSource=admin';
 
 async function request(path, { token, expected = 200, ...options } = {}) {
   const response = await fetch(`${apiUrl}${path}`, {
@@ -54,6 +59,17 @@ async function signIn(email) {
   });
 }
 
+async function simulateLegacyClipboardItem(itemUid) {
+  await mongoose.connect(mongoUrl);
+  try {
+    await mongoose.connection
+      .collection('clipboard_items')
+      .updateOne({ uid: itemUid }, { $unset: { sourceClientUid: '' } });
+  } finally {
+    await mongoose.disconnect();
+  }
+}
+
 function openSocket({ token, clientUid }) {
   const url = apiUrl.replace(/^http/, 'ws');
   const socket = new WebSocket(`${url}/ux/v1/realtime?clientUid=${clientUid}&platform=macos`, {
@@ -88,6 +104,24 @@ assert.notEqual(owner.account.clipboardUid, stranger.account.clipboardUid);
 
 const sourceClientUid = randomBytes(16).toString('hex').toUpperCase();
 const receiverClientUid = randomBytes(16).toString('hex').toUpperCase();
+await request('/ux/v1/devices/register', {
+  token: owner.accessToken,
+  method: 'POST',
+  body: JSON.stringify({
+    clientUid: sourceClientUid,
+    platform: 'macos',
+    name: 'Integration Mac',
+  }),
+});
+await request('/ux/v1/devices/register', {
+  token: owner.accessToken,
+  method: 'POST',
+  body: JSON.stringify({
+    clientUid: receiverClientUid,
+    platform: 'macos',
+    name: 'Integration Receiver',
+  }),
+});
 const source = await openSocket({ token: owner.accessToken, clientUid: sourceClientUid });
 const receiver = await openSocket({ token: owner.accessToken, clientUid: receiverClientUid });
 await waitForMessage(source.messages, 'connected');
@@ -105,6 +139,7 @@ const created = await request('/ux/v1/items', {
   }),
 });
 assert.equal(created.item.text, `integration item ${suffix}`);
+assert.equal(created.item.sourceDeviceName, 'Integration Mac');
 const delivered = await waitForMessage(receiver.messages, 'clipboard-item');
 assert.equal(delivered.item.uid, created.item.uid);
 await sleep(250);
@@ -113,8 +148,30 @@ assert.equal(
   false,
 );
 
+await simulateLegacyClipboardItem(created.item.uid);
 const history = await request('/ux/v1/history?page=1&pageSize=50', { token: owner.accessToken });
 assert.equal(history.items[0].uid, created.item.uid);
+assert.equal(history.items[0].sourceDeviceName, 'Integration Mac');
+const renamedDevice = await request(`/ux/v1/devices/${sourceClientUid}`, {
+  token: owner.accessToken,
+  method: 'PATCH',
+  body: JSON.stringify({ name: 'Renamed Integration Mac' }),
+});
+assert.equal(renamedDevice.device.name, 'Renamed Integration Mac');
+const reregisteredDevice = await request('/ux/v1/devices/register', {
+  token: owner.accessToken,
+  method: 'POST',
+  body: JSON.stringify({
+    clientUid: sourceClientUid,
+    platform: 'macos',
+    name: 'Updated OS Computer Name',
+  }),
+});
+assert.equal(reregisteredDevice.device.name, 'Renamed Integration Mac');
+const renamedHistory = await request('/ux/v1/history?page=1&pageSize=50', {
+  token: owner.accessToken,
+});
+assert.equal(renamedHistory.items[0].sourceDeviceName, 'Renamed Integration Mac');
 const item = await request(`/ux/v1/items/${created.item.uid}`, { token: owner.accessToken });
 assert.equal(item.item.text, created.item.text);
 
@@ -126,7 +183,7 @@ const image = await request('/ux/v1/items', {
   expected: 201,
   body: JSON.stringify({
     clientUid: sourceClientUid,
-    sourcePlatform: 'ios',
+    sourcePlatform: 'macos',
     kind: 'image',
     imageBase64,
     mimeType: 'image/png',
@@ -141,6 +198,12 @@ await request(`/ux/v1/items/${created.item.uid}`, { token: stranger.accessToken,
 await request(`/ux/v1/items/${image.item.uid}`, { token: stranger.accessToken, expected: 404 });
 const strangerHistory = await request('/ux/v1/history', { token: stranger.accessToken });
 assert.equal(strangerHistory.items.length, 0);
+await request(`/ux/v1/devices/${sourceClientUid}`, {
+  token: stranger.accessToken,
+  method: 'PATCH',
+  expected: 404,
+  body: JSON.stringify({ name: 'Unauthorized rename' }),
+});
 
 source.socket.close();
 receiver.socket.close();

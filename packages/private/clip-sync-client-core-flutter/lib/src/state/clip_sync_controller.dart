@@ -6,8 +6,10 @@ import '../api/api_client.dart';
 import '../auth/google_auth_service.dart';
 import '../auth/session_store.dart';
 import '../clipboard/clipboard_adapter.dart';
+import '../device/device_name_provider.dart';
 import '../models/auth_session.dart';
 import '../models/clip_item.dart';
+import '../models/sync_device.dart';
 import '../sharing/share_receiver.dart';
 import '../sync/desktop_sync_controller.dart';
 
@@ -19,6 +21,7 @@ class ClipSyncController extends ChangeNotifier {
     required this.googleAuthService,
     required this.clipboard,
     required this.shareReceiver,
+    required this.deviceNameProvider,
     required this.platform,
     required this.isDesktop,
   });
@@ -28,10 +31,12 @@ class ClipSyncController extends ChangeNotifier {
   final GoogleAuthService googleAuthService;
   final ClipboardAdapter clipboard;
   final ShareReceiver shareReceiver;
+  final DeviceNameProvider deviceNameProvider;
   final String platform;
   final bool isDesktop;
 
   final List<ClipItem> _items = [];
+  final List<SyncDevice> _devices = [];
   final List<IncomingShare> _pendingShares = [];
   StreamSubscription<IncomingShare>? _shareSubscription;
   DesktopSyncController? _desktopSync;
@@ -44,6 +49,7 @@ class ClipSyncController extends ChangeNotifier {
   String? _errorMessage;
 
   List<ClipItem> get items => List.unmodifiable(_items);
+  List<SyncDevice> get devices => List.unmodifiable(_devices);
   AuthSession? get session => _session;
   bool get isAuthenticated => _session != null;
   bool get isBusy => _busy;
@@ -106,6 +112,15 @@ class ClipSyncController extends ChangeNotifier {
     _items.clear();
     _loadedPage = 0;
     _totalPages = 0;
+    final currentDevice = await apiClient.registerDevice(
+      session: _session!,
+      clientUid: _clientUid!,
+      platform: platform,
+      name: await deviceNameProvider.readName(platform),
+    );
+    _devices
+      ..clear()
+      ..add(currentDevice);
     await _loadMoreHistory();
     if (isDesktop) {
       _desktopSync = DesktopSyncController(
@@ -140,6 +155,37 @@ class ClipSyncController extends ChangeNotifier {
   }
 
   Future<void> loadMoreHistory() => _runBusy(_loadMoreHistory);
+
+  /// Loads all account-owned devices before opening device management.
+  Future<void> refreshDevices() => _runBusy(() async {
+    final session = _session;
+    if (session == null) return;
+    _devices
+      ..clear()
+      ..addAll(await apiClient.listDevices(session));
+  });
+
+  /// Renames an account-owned device and refreshes source labels immediately.
+  Future<void> renameDevice(SyncDevice device, String name) =>
+      _runBusy(() async {
+        final session = _session;
+        if (session == null) return;
+        final renamed = await apiClient.renameDevice(
+          session: session,
+          deviceUid: device.uid,
+          name: name.trim(),
+        );
+        final index = _devices.indexWhere(
+          (candidate) => candidate.uid == renamed.uid,
+        );
+        if (index >= 0) _devices[index] = renamed;
+        _items.clear();
+        _loadedPage = 0;
+        _totalPages = 0;
+        await _loadMoreHistory();
+      });
+
+  bool isCurrentDevice(SyncDevice device) => device.uid == _clientUid;
 
   /// Reloads the newest history page after a client has been idle.
   Future<void> refreshHistory() => _runBusy(() async {
@@ -196,6 +242,7 @@ class ClipSyncController extends ChangeNotifier {
       await sessionStore.clearSession();
       _session = null;
       _items.clear();
+      _devices.clear();
       _loadedPage = 0;
       _totalPages = 0;
     });

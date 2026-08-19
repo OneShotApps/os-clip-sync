@@ -24,6 +24,19 @@ function dependencies() {
       getItem: vi.fn(),
       deleteItem: vi.fn(),
     },
+    deviceService: {
+      list: vi.fn().mockResolvedValue([]),
+      register: vi.fn().mockImplementation(async ({ clientUid, platform, name }) => ({
+        uid: clientUid,
+        platform,
+        name,
+      })),
+      rename: vi.fn().mockImplementation(async ({ deviceUid, name }) => ({
+        uid: deviceUid,
+        platform: 'macos',
+        name,
+      })),
+    },
     realtimeHub: {},
     upgradeWebSocket: () => (context) => context.text('upgrade unavailable in unit tests', 501),
   };
@@ -69,5 +82,40 @@ describe('Clip Sync API', () => {
 
     expect(response.status).toBe(401);
     expect(body.code).toBe('CLIP_SYNC_AUTHENTICATION_REQUIRED');
+  });
+
+  it('registers the current device behind account authentication', async () => {
+    const values = dependencies();
+    const clientUid = 'C'.repeat(32);
+    const response = await createApp(values).request('/ux/v1/devices/register', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer token',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ clientUid, platform: 'macos', name: 'Studio Mac' }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.device.name).toBe('Studio Mac');
+    expect(values.deviceService.register).toHaveBeenCalledWith(
+      expect.objectContaining({ clientUid, platform: 'macos', name: 'Studio Mac' }),
+    );
+  });
+
+  it('validates device names before attempting a rename', async () => {
+    const values = dependencies();
+    const response = await createApp(values).request(`/ux/v1/devices/${'D'.repeat(32)}`, {
+      method: 'PATCH',
+      headers: {
+        authorization: 'Bearer token',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ name: '   ' }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(values.deviceService.rename).not.toHaveBeenCalled();
   });
 });

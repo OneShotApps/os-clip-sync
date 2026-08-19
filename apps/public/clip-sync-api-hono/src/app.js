@@ -30,7 +30,7 @@ export function createApp(dependencies) {
         return config.corsOrigins.includes(origin) ? origin : '';
       },
       allowHeaders: ['Authorization', 'Content-Type'],
-      allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+      allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
       exposeHeaders: ['x-correlation-id'],
     }),
   );

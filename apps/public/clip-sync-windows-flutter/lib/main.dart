@@ -33,6 +33,7 @@ Future<void> main() async {
     googleAuthService: GoogleAuthService(sessionStore: sessionStore),
     clipboard: ClipboardAdapter(),
     shareReceiver: ShareReceiver(),
+    deviceNameProvider: DeviceNameProvider(),
     platform: 'windows',
     isDesktop: true,
   );

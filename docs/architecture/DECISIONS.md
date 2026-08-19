@@ -27,12 +27,14 @@ flowchart LR
 - A verified email address links email and Google identifiers to one account. The first sign-in transaction creates both the account and its single clipboard.
 - Auth endpoints are rate limited. All request payloads, size limits, and environment variables are validated.
 
-The POC deliberately has no organization, membership, administrator, token-revocation, or device-management models because those capabilities are outside the approved scope.
+The POC deliberately has no organization, membership, administrator, or token-revocation models. It has only the device registry required to report operating-system names and let the account owner rename devices; device revocation and device-count policy remain outside scope.
 
 ## Clipboard behavior
 
 - Supported payloads are UTF-8 text up to 256 KiB and PNG, JPEG, or WebP photos up to 10 MiB after decoding.
 - History is newest-first with 50 items per page by default and a maximum page size of 100. Items remain indefinitely until soft-deleted by their owner.
+- Each installed client registers its stable client UID, platform, and operating-system-reported name after authentication. An optional account-assigned name overrides the reported name without changing device identity.
+- New MongoDB clipboard items retain the source client UID. History responses resolve the device's current effective name from PostgreSQL, so a rename appears on every client's next history refresh. For existing MongoDB items, the API recovers the source client UID from the matching delivery event; only an item with neither form of identity falls back to a human-readable platform label.
 - A desktop polls the operating-system clipboard while active. It compares a SHA-256 fingerprint so an unchanged or remotely applied value is not uploaded again.
 - Pausing records the current clipboard fingerprint as the baseline. Resuming records a new baseline, so content copied during the pause is never uploaded later.
 - The WebSocket hub holds online connections in process memory. A newly persisted item is sent to other online Windows/macOS client identifiers only. There is no message queue and no reconnect replay.
@@ -41,7 +43,7 @@ The POC deliberately has no organization, membership, administrator, token-revoc
 
 ## Persistence and consistency
 
-PostgreSQL is authoritative for identities, one-to-one clipboard ownership, login challenges, and immutable creation/delivery audit events. MongoDB is authoritative for clipboard content and its content index. Creating an item writes MongoDB first, then its PostgreSQL event. If the event write fails, the newly written MongoDB item is immediately removed as compensation. User deletion is a MongoDB soft delete; the POC does not invent a separate deletion-event contract that the requirements did not define.
+PostgreSQL is authoritative for identities, one-to-one clipboard ownership, account-owned device names, login challenges, and immutable creation/delivery audit events. MongoDB is authoritative for clipboard content and its content index; each new content document also retains the stable source client UID used to resolve a current PostgreSQL device name. Creating an item writes MongoDB first, then its PostgreSQL event. If the event write fails, the newly written MongoDB item is immediately removed as compensation. User deletion is a MongoDB soft delete; the POC does not invent a separate deletion-event contract that the requirements did not define.
 
 This is a POC consistency boundary, not a distributed transaction. A production evolution could use a durable outbox, but it is not introduced without evidence that the POC requires it.
 

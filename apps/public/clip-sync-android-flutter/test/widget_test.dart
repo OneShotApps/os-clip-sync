@@ -14,6 +14,7 @@ void main() {
       googleAuthService: GoogleAuthService(sessionStore: sessionStore),
       clipboard: ClipboardAdapter(),
       shareReceiver: ShareReceiver(),
+      deviceNameProvider: DeviceNameProvider(),
       platform: 'android',
       isDesktop: false,
     );

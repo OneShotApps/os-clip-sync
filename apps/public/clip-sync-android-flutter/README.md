@@ -6,7 +6,7 @@ This target-specific Flutter application browses, copies, refreshes, and deletes
 flutter pub get
 flutter analyze
 flutter test
-node ../../../tools/with-google-oauth.js -- flutter run --dart-define=CLIP_SYNC_API_URL=http://10.0.2.2:4100
+node ../../../tools/with-google-oauth.js -- flutter run
 node ../../../tools/with-google-oauth.js -- flutter build apk --release --dart-define=CLIP_SYNC_API_URL=https://api.example.com
 ```
 

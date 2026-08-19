@@ -6,7 +6,7 @@ This resident target-specific Flutter application monitors text and photos while
 flutter pub get
 flutter analyze
 flutter test
-node ../../../tools/with-google-oauth.js -- flutter run -d macos --dart-define=CLIP_SYNC_API_URL=http://localhost:4100
+node ../../../tools/with-google-oauth.js -- flutter run -d macos
 node ../../../tools/with-google-oauth.js -- flutter build macos --release --dart-define=CLIP_SYNC_API_URL=https://api.example.com
 ```
 

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { z } from 'zod';
 
 const booleanText = z.enum(['true', 'false']).transform((value) => value === 'true');
@@ -10,7 +12,8 @@ const configurationSchema = z
     CLIP_SYNC_MONGO_URL: z.string().url(),
     CLIP_SYNC_JWT_SECRET: z.string().min(32),
     CLIP_SYNC_AUTH_CODE_PEPPER: z.string().min(32),
-    CLIP_SYNC_GOOGLE_CLIENT_IDS: z.string().min(1),
+    CLIP_SYNC_GOOGLE_CLIENT_IDS: z.string().optional().default(''),
+    CLIP_SYNC_GOOGLE_OAUTH_CONFIG_PATH: z.string().optional().default(''),
     CLIP_SYNC_SMTP_HOST: z.string().min(1),
     CLIP_SYNC_SMTP_PORT: z.coerce.number().int().min(1).max(65535),
     CLIP_SYNC_SMTP_SECURE: booleanText,
@@ -34,8 +37,14 @@ const configurationSchema = z
         message: 'CLIP_SYNC_JWT_SECRET and CLIP_SYNC_AUTH_CODE_PEPPER must be different.',
       });
     }
-    if (!value.CLIP_SYNC_GOOGLE_CLIENT_IDS.split(',').some((clientId) => clientId.trim())) {
-      context.addIssue({ code: 'custom', message: 'At least one Google client ID is required.' });
+    if (
+      !value.CLIP_SYNC_GOOGLE_CLIENT_IDS.split(',').some((clientId) => clientId.trim()) &&
+      !value.CLIP_SYNC_GOOGLE_OAUTH_CONFIG_PATH.trim()
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Google client IDs or a Google OAuth configuration file is required.',
+      });
     }
     const corsOrigins = value.CLIP_SYNC_CORS_ORIGINS.split(',')
       .map((origin) => origin.trim())
@@ -49,6 +58,30 @@ const configurationSchema = z
       });
     }
   });
+
+function loadGoogleClientIds(value) {
+  const configuredClientIds = value.CLIP_SYNC_GOOGLE_CLIENT_IDS.split(',')
+    .map((clientId) => clientId.trim())
+    .filter(Boolean);
+  if (configuredClientIds.length > 0) return configuredClientIds;
+
+  let document;
+  try {
+    document = JSON.parse(readFileSync(value.CLIP_SYNC_GOOGLE_OAUTH_CONFIG_PATH.trim(), 'utf8'));
+  } catch {
+    throw new Error(
+      'Clip Sync configuration is invalid. The Google OAuth configuration file cannot be read or is not valid JSON.',
+    );
+  }
+
+  const clientId = document?.web?.client_id;
+  if (typeof clientId !== 'string' || !clientId.trim()) {
+    throw new Error(
+      'Clip Sync configuration is invalid. The Google OAuth configuration file does not contain web.client_id.',
+    );
+  }
+  return [clientId.trim()];
+}
 
 /**
  * Validates environment variables and returns application configuration.
@@ -72,9 +105,7 @@ export function loadConfig(environment = process.env) {
     mongoUrl: value.CLIP_SYNC_MONGO_URL,
     jwtSecret: value.CLIP_SYNC_JWT_SECRET,
     authCodePepper: value.CLIP_SYNC_AUTH_CODE_PEPPER,
-    googleClientIds: value.CLIP_SYNC_GOOGLE_CLIENT_IDS.split(',')
-      .map((clientId) => clientId.trim())
-      .filter(Boolean),
+    googleClientIds: loadGoogleClientIds(value),
     smtp: {
       host: value.CLIP_SYNC_SMTP_HOST,
       port: value.CLIP_SYNC_SMTP_PORT,

@@ -7,15 +7,19 @@ Clip Sync runs its complete server stack with Docker Compose on one host. The AP
 Prerequisites: Docker Desktop/Engine with Compose v2 and the local ports listed in the root README.
 
 ```sh
-node tools/with-google-oauth.js -- docker compose -f compose.local.yaml config --quiet
-node tools/with-google-oauth.js -- docker compose -f compose.local.yaml up --build -d
-docker compose -f compose.local.yaml ps
-curl --fail http://localhost:4100/
+docker compose -f compose.local.yaml up
 ```
 
-The API source is bind-mounted and Bun watch mode reloads changes. PostgreSQL listens on host port 5400, MongoDB on 27017, and Mailpit on 8025. Local credentials are deliberately non-production values and must never be reused in a shared environment.
+In another terminal:
 
-If one of those host ports is already occupied, set `CLIP_SYNC_LOCAL_API_PORT`, `CLIP_SYNC_LOCAL_POSTGRES_PORT`, `CLIP_SYNC_LOCAL_MONGO_PORT`, or `CLIP_SYNC_LOCAL_MAILPIT_PORT` for the command. Container ports and service-to-service addresses do not change.
+```sh
+docker compose -f compose.local.yaml ps
+curl --fail http://localhost:4200/
+```
+
+The API source is bind-mounted and Bun watch mode reloads changes. The API listens on host port 4200, PostgreSQL on 5401, MongoDB on 27017, and Mailpit on 8025. Local Compose mounts `keys/google-oauth.json` read-only and the API loads its Google client ID from that file. Local credentials are deliberately non-production values and must never be reused in a shared environment.
+
+The fixed host ports keep local startup deterministic. Stop or reconfigure any other process that occupies one of the local ports before starting this stack.
 
 Inspect and stop:
 
@@ -64,7 +68,7 @@ Stop the application with `docker compose --env-file /secure/path/clip-sync.env 
 
 - PostgreSQL and MongoDB URLs must use the Compose service names `postgres` and `mongo` inside containers.
 - JWT secret and authentication-code pepper must be distinct random values of at least 32 characters.
-- `CLIP_SYNC_GOOGLE_CLIENT_IDS` is a comma-separated allowlist of native Google OIDC client IDs. For local and shared development, `tools/with-google-oauth.js` supplies the single committed client ID without displaying it. Production may supply the same ID or a wider approved allowlist through its deployment environment.
+- `CLIP_SYNC_GOOGLE_CLIENT_IDS` is a comma-separated allowlist of native Google OIDC client IDs for shared environments. Local Compose instead supplies `CLIP_SYNC_GOOGLE_OAUTH_CONFIG_PATH` and mounts the approved configuration file read-only. Production may supply the same ID or a wider approved allowlist through its deployment environment.
 - SMTP host, port, security flag, optional credentials, and sender must describe a working provider.
 - The API port must be available to the reverse proxy.
 

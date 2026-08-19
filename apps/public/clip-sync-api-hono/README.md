@@ -16,4 +16,4 @@ bun run test
 
 After the local Compose stack is healthy, run `bun run test:integration`. The test creates unique accounts through Mailpit, confirms owner isolation and the item lifecycle, and verifies live WebSocket delivery excludes the source and does not replay after reconnect.
 
-Configuration is read only from `CLIP_SYNC_*` environment values and is validated before a datastore connection is opened. See the root `.env.example` and deployment runbook for the complete list. Never store a real token or secret in this folder.
+Configuration is validated before a datastore connection is opened. Shared environments use the `CLIP_SYNC_*` values listed in the root `.env.example`. Local Compose mounts the approved `keys/google-oauth.json` file read-only and provides its path through `CLIP_SYNC_GOOGLE_OAUTH_CONFIG_PATH`; an explicit `CLIP_SYNC_GOOGLE_CLIENT_IDS` value takes priority in shared environments. Never store a real token or secret in this folder.

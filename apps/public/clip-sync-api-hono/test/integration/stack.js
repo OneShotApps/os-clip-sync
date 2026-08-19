@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 
-const apiUrl = process.env.CLIP_SYNC_INTEGRATION_API_URL ?? 'http://127.0.0.1:4100';
+const apiUrl = process.env.CLIP_SYNC_INTEGRATION_API_URL ?? 'http://127.0.0.1:4200';
 const mailpitUrl = process.env.CLIP_SYNC_INTEGRATION_MAILPIT_URL ?? 'http://127.0.0.1:8025';
 
 async function request(path, { token, expected = 200, ...options } = {}) {

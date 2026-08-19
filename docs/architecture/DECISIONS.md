@@ -21,7 +21,7 @@ flowchart LR
 ## Authentication
 
 - Google uses OpenID Connect (OIDC). The API validates the signed Google ID token, issuer, audience, email, and verified-email claim.
-- Native builds receive the explicitly approved Google web OAuth client values from `keys/google-oauth.json`. Desktop authorization returns through the exact `http://localhost:8000` loopback URI. A repository launcher validates the file, avoids displaying its values, and removes its temporary Flutter configuration after each command.
+- Native builds receive the explicitly approved Google web OAuth client values from `keys/google-oauth.json`. Local Compose mounts the same file read-only so the API can validate Google token audiences without shell configuration. Desktop authorization returns through the exact `http://localhost:8000` loopback URI. A repository launcher validates the file, avoids displaying its values, and removes its temporary Flutter configuration after each Flutter command.
 - Email sign-in uses a random six-digit code that expires after ten minutes, is single-use, and permits five failed attempts. Only a keyed hash is stored.
 - Successful sign-in returns a signed 30-day JSON Web Token (JWT). Native clients store it only in platform secure storage.
 - A verified email address links email and Google identifiers to one account. The first sign-in transaction creates both the account and its single clipboard.

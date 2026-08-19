@@ -13,7 +13,7 @@ services:
       CLIP_SYNC_MONGO_URL: mongodb://clip_sync:local-mongo-password@mongo:27017/clip_sync?authSource=admin
       CLIP_SYNC_JWT_SECRET: local-jwt-secret-change-before-shared-use
       CLIP_SYNC_AUTH_CODE_PEPPER: local-code-pepper-change-before-shared-use
-      CLIP_SYNC_GOOGLE_CLIENT_IDS: ${CLIP_SYNC_GOOGLE_CLIENT_IDS:-local-placeholder.apps.googleusercontent.com}
+      CLIP_SYNC_GOOGLE_OAUTH_CONFIG_PATH: /run/clip-sync/google-oauth.json
       CLIP_SYNC_SMTP_HOST: mailpit
       CLIP_SYNC_SMTP_PORT: 1025
       CLIP_SYNC_SMTP_SECURE: "false"
@@ -22,9 +22,10 @@ services:
       CLIP_SYNC_EMAIL_FROM: no-reply@clip-sync.local
       CLIP_SYNC_CORS_ORIGINS: "*"
     ports:
-      - "${CLIP_SYNC_LOCAL_API_PORT:-4100}:4100"
+      - "4200:4100"
     volumes:
       - ./apps/public/clip-sync-api-hono:/app
+      - ./keys/google-oauth.json:/run/clip-sync/google-oauth.json:ro
       - api_node_modules:/app/node_modules
     depends_on:
       postgres:
@@ -48,7 +49,7 @@ services:
       POSTGRES_PASSWORD: local-postgres-password
       POSTGRES_DB: clip_sync
     ports:
-      - "${CLIP_SYNC_LOCAL_POSTGRES_PORT:-5400}:5432"
+      - "5401:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -65,7 +66,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: clip_sync
       MONGO_INITDB_ROOT_PASSWORD: local-mongo-password
     ports:
-      - "${CLIP_SYNC_LOCAL_MONGO_PORT:-27017}:27017"
+      - "27017:27017"
     volumes:
       - mongo_data:/data/db
     healthcheck:
@@ -79,7 +80,7 @@ services:
   mailpit:
     image: axllent/mailpit:v1.27
     ports:
-      - "${CLIP_SYNC_LOCAL_MAILPIT_PORT:-8025}:8025"
+      - "8025:8025"
     healthcheck:
       test: ["CMD", "/mailpit", "readyz"]
       interval: 5s

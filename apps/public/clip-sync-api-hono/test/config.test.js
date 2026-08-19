@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import { loadConfig } from '../src/config.js';
@@ -29,6 +31,29 @@ describe('loadConfig', () => {
       'two.apps.googleusercontent.com',
     ]);
     expect(config.smtp.secure).toBe(false);
+  });
+
+  it('loads a Google client ID from a mounted OAuth configuration file', () => {
+    const environment = {
+      ...validEnvironment,
+      CLIP_SYNC_GOOGLE_CLIENT_IDS: '',
+      CLIP_SYNC_GOOGLE_OAUTH_CONFIG_PATH: fileURLToPath(
+        new URL('fixtures/google-oauth.json', import.meta.url),
+      ),
+    };
+
+    expect(loadConfig(environment).googleClientIds).toEqual([
+      'file-client.apps.googleusercontent.com',
+    ]);
+  });
+
+  it('requires Google client IDs or an OAuth configuration file', () => {
+    expect(() =>
+      loadConfig({
+        ...validEnvironment,
+        CLIP_SYNC_GOOGLE_CLIENT_IDS: '',
+      }),
+    ).toThrow('Google client IDs or a Google OAuth configuration file is required.');
   });
 
   it('fails when only one SMTP credential is provided', () => {

@@ -24,7 +24,7 @@ Future<void> main() async {
 
   const apiUrl = String.fromEnvironment(
     'CLIP_SYNC_API_URL',
-    defaultValue: 'http://127.0.0.1:4100',
+    defaultValue: 'http://127.0.0.1:4200',
   );
   final sessionStore = SessionStore();
   final controller = ClipSyncController(

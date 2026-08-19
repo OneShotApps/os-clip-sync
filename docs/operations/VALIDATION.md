@@ -40,8 +40,8 @@ Install signed target builds and manually confirm email and Google sign-in, text
 docker compose -f compose.local.yaml config --quiet
 docker compose --env-file .env.example -f compose.dev.yaml config --quiet
 docker compose --env-file .env.example -f compose.prod.yaml config --quiet
-docker compose -f compose.local.yaml up --build -d --wait
-curl --fail http://localhost:4100/
+docker compose -f compose.local.yaml up -d --wait
+curl --fail http://localhost:4200/
 docker compose -f compose.local.yaml down
 ```
 

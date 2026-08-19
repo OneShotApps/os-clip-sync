@@ -10,7 +10,7 @@ Future<void> main() async {
 
   const apiUrl = String.fromEnvironment(
     'CLIP_SYNC_API_URL',
-    defaultValue: 'http://10.0.2.2:4100',
+    defaultValue: 'http://10.0.2.2:4200',
   );
   final sessionStore = SessionStore();
   final controller = ClipSyncController(

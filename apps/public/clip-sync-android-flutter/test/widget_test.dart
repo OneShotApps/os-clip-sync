@@ -9,7 +9,7 @@ void main() {
   ) async {
     final sessionStore = SessionStore();
     final controller = ClipSyncController(
-      apiClient: ClipSyncApiClient(baseUrl: 'http://10.0.2.2:4100'),
+      apiClient: ClipSyncApiClient(baseUrl: 'http://10.0.2.2:4200'),
       sessionStore: sessionStore,
       googleAuthService: GoogleAuthService(sessionStore: sessionStore),
       clipboard: ClipboardAdapter(),

@@ -16,12 +16,17 @@ The approved behavior is defined in [docs/concepts/REQUIREMENTS.md](docs/concept
 
 ## Start the local server
 
-Prerequisites are Docker Desktop with Compose v2 and ports 4100, 5400, 27017, and 8025 available.
+Prerequisites are Docker Desktop with Compose v2 and ports 4200, 5401, 27017, and 8025 available.
 
 ```sh
-node tools/with-google-oauth.js -- docker compose -f compose.local.yaml up --build -d
+docker compose -f compose.local.yaml up
+```
+
+In another terminal, verify the stack:
+
+```sh
 docker compose -f compose.local.yaml ps
-curl --fail http://localhost:4100/
+curl --fail http://localhost:4200/
 ```
 
 Mailpit captures local sign-in codes at `http://localhost:8025`. Stop the stack without deleting its databases with:
@@ -34,15 +39,15 @@ See [docs/operations/DEPLOYMENT.md](docs/operations/DEPLOYMENT.md) for shared de
 
 ## Run a client
 
-Flutter 3.47 or newer and Node.js 22 or newer are required. The repository contains the explicitly approved Google OAuth client configuration at `keys/google-oauth.json`. The launcher validates that file without printing its values, supplies its client ID to the API, and creates a temporary Dart-define file for Flutter that is removed when the command finishes.
+Flutter 3.47 or newer and Node.js 22 or newer are required. The repository contains the explicitly approved Google OAuth client configuration at `keys/google-oauth.json`. Local Compose mounts that file read-only for the API. The launcher validates it without printing its values and creates a temporary Dart-define file for Flutter that is removed when the command finishes.
 
 ```sh
 cd apps/public/clip-sync-android-flutter
 flutter pub get
-node ../../../tools/with-google-oauth.js -- flutter run --dart-define=CLIP_SYNC_API_URL=http://10.0.2.2:4100
+node ../../../tools/with-google-oauth.js -- flutter run
 ```
 
-Use `http://localhost:4100` for desktop and an address reachable from a physical phone for device testing. The committed Google web client must retain the exact `http://localhost:8000` JavaScript origin and redirect URI because the desktop sign-in callback listens on that loopback address. Android and iOS also require the native registrations described in each app's README. Email-code sign-in works without Google configuration.
+The local defaults use `http://localhost:4200` on desktop/iOS Simulator and `http://10.0.2.2:4200` on the Android emulator. A physical phone needs an explicit reachable address. The committed Google web client must retain the exact `http://localhost:8000` JavaScript origin and redirect URI because the desktop sign-in callback listens on that loopback address. Android and iOS also require the native registrations described in each app's README. Email-code sign-in works without Google configuration.
 
 Run `node tools/with-google-oauth.js --check` from the repository root to validate the file without starting another process. The OAuth values are intentionally distributed to native builds; this exception does not authorize committing service credentials, signing keys, user tokens, or any other file under `keys/`.
 

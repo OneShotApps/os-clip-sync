@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:clip_sync_client_core/clip_sync_client_core.dart';
 import 'package:clip_sync_macos/src/clip_sync_app.dart';
 import 'package:flutter/material.dart';
@@ -30,5 +32,17 @@ void main() {
     );
 
     expect(icon.lengthInBytes, greaterThan(0));
+  });
+
+  test('release permits the local Google OAuth callback listener', () {
+    final entitlements = File('macos/Runner/Release.entitlements')
+        .readAsStringSync();
+
+    expect(
+      entitlements,
+      matches(
+        RegExp(r'<key>com\.apple\.security\.network\.server</key>\s*<true/>'),
+      ),
+    );
   });
 }

@@ -12,7 +12,7 @@ node ../../../tools/with-google-oauth.js -- flutter build macos --release --dart
 
 The native `NSServices` entry accepts selected text and image/file URLs from macOS Services and forwards them through the shared client controller. Enable Clip Sync in System Settings > Keyboard > Keyboard Shortcuts > Services if macOS does not show it immediately.
 
-A complete Xcode installation and CocoaPods are required to build. The launcher supplies the Google client values and redirect port required by `google_sign_in_all_platforms`. The Google client must retain exact `http://localhost:8000` origin and redirect entries. Email-code sign-in remains available without Google.
+A complete Xcode installation and CocoaPods are required to build. The launcher supplies the Google client values and redirect port required by `google_sign_in_all_platforms`. The Google client must retain exact `http://localhost:8000` origin and redirect entries. Both macOS entitlement profiles allow the sandboxed app to open that local callback listener. Email-code sign-in remains available without Google.
 
 The first Flutter frame does not wait for menu-bar initialization. The menu-bar icon is a declared Flutter asset, and a tray failure is reported to the launch terminal without leaving an empty native window.
 

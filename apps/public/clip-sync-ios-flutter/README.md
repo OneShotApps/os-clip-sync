@@ -2,6 +2,8 @@
 
 This target-specific Flutter application browses, copies, refreshes, and deletes private history. Its native Share Extension accepts text and photos. It never monitors or automatically changes the mobile clipboard.
 
+Use the refresh button in the clipboard-history header or pull down on the history list to retrieve items copied on another device.
+
 ```sh
 flutter pub get
 flutter analyze

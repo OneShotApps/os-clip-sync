@@ -275,6 +275,11 @@ class _MobileHistoryScreen extends StatelessWidget {
       title: const Text('Clipboard history'),
       actions: [
         IconButton(
+          onPressed: controller.isBusy ? null : _refresh,
+          tooltip: 'Refresh history',
+          icon: const Icon(Icons.refresh),
+        ),
+        IconButton(
           onPressed: _signOut,
           tooltip: 'Sign out',
           icon: const Icon(Icons.logout),

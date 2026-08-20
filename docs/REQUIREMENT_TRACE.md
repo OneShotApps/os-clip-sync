@@ -15,7 +15,7 @@ This is the implementation audit for `docs/concepts/REQUIREMENTS.md` version 1.0
 | Server-backed indefinite history | MongoDB text/photo documents have no automatic expiry, newest-first pagination, owner-scoped detail, and soft deletion. Clients store no history database. |
 | Device names and account-owned renaming | OS-backed device-name provider, stable client UID registration, account-scoped PostgreSQL device registry, source UID on new MongoDB items, dynamically resolved history labels, and rename controls in all four apps. |
 | Browse, manual copy, and confirmed multi-item deletion on every target | Shared controller plus target-specific Windows/macOS/iOS/Android selection state, checked leading icons, selected counts, confirmation prompts, and delete actions; photo detail is loaded only when copied. |
-| Adaptive visible-history refresh on iOS and macOS | Shared `HistoryRefreshScheduler`, target lifecycle/window visibility hooks, manual restart controls, and target-specific paused indicators. |
+| Adaptive visible-history refresh on Android, iOS, and macOS | Shared `HistoryRefreshScheduler`, target lifecycle/window visibility hooks, manual restart controls, and target-specific paused indicators. |
 | No automatic mobile monitoring or incoming clipboard writes | iOS and Android instantiate no desktop sync controller or WebSocket and modify the clipboard only after a user taps Copy. |
 | Share text/photo from Android | `ACTION_SEND` text/image filters plus `share_handler` intake. |
 | Share text/photo from iOS | Native Share Extension, shared App Group, repeatable Xcode target configuration, and `share_handler` intake. |

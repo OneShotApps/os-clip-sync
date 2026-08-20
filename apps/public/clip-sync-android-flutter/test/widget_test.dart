@@ -95,6 +95,34 @@ void main() {
 
     expect(apiClient.historyRequestCount, initialHistoryRequests + 1);
   });
+
+  testWidgets('automatically refreshes visible clipboard history', (
+    tester,
+  ) async {
+    final sessionStore = _FakeSessionStore();
+    final apiClient = _FakeApiClient([]);
+    final controller = ClipSyncController(
+      apiClient: apiClient,
+      sessionStore: sessionStore,
+      googleAuthService: GoogleAuthService(sessionStore: sessionStore),
+      clipboard: ClipboardAdapter(),
+      shareReceiver: _FakeShareReceiver(),
+      deviceNameProvider: _FakeDeviceNameProvider(),
+      platform: 'android',
+      isDesktop: false,
+    );
+    addTearDown(controller.dispose);
+    await controller.initialize();
+    await tester.pumpWidget(
+      ClipSyncMobileApp(controller: controller, platformName: 'Android'),
+    );
+    final initialHistoryRequests = apiClient.historyRequestCount;
+
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pump();
+
+    expect(apiClient.historyRequestCount, initialHistoryRequests + 1);
+  });
 }
 
 ClipItem _historyItem(String uid, String text) => ClipItem(

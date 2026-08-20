@@ -46,6 +46,7 @@ void main() {
       ClipSyncMobileApp(controller: controller, platformName: 'iOS'),
     );
     expect(find.byTooltip('Refresh history'), findsOneWidget);
+    expect(find.byKey(const ValueKey('history-refresh-icon')), findsOneWidget);
     expect(find.byTooltip('Manage devices'), findsOneWidget);
     expect(apiClient.historyRequestCount, 1);
 

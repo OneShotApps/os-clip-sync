@@ -4,6 +4,8 @@ This resident target-specific Flutter application monitors text and photos while
 
 While the clipboard-history window is visible, history refreshes every 5 seconds for 30 seconds, then every 30 seconds. Automatic refresh pauses after 2 minutes and displays a notice. Press Refresh to refresh immediately and restart the schedule. Hiding or minimizing the window stops the schedule until the window is shown again.
 
+The circular Refresh icon spins while a request is active. Unchanged history remains mounted without repainting, which prevents automatic refresh flicker.
+
 ```sh
 flutter pub get
 flutter analyze

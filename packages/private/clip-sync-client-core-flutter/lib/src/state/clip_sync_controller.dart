@@ -36,6 +36,7 @@ class ClipSyncController extends ChangeNotifier {
   final bool isDesktop;
 
   final List<ClipItem> _items = [];
+  final List<ClipItem> _newestHistoryPage = [];
   final List<SyncDevice> _devices = [];
   final List<IncomingShare> _pendingShares = [];
   StreamSubscription<IncomingShare>? _shareSubscription;
@@ -110,6 +111,7 @@ class ClipSyncController extends ChangeNotifier {
 
   Future<void> _startAuthenticatedState() async {
     _items.clear();
+    _newestHistoryPage.clear();
     _loadedPage = 0;
     _totalPages = 0;
     final currentDevice = await apiClient.registerDevice(
@@ -149,6 +151,11 @@ class ClipSyncController extends ChangeNotifier {
     final page = await apiClient.listHistory(session, page: _loadedPage + 1);
     final existingUids = _items.map((item) => item.uid).toSet();
     _items.addAll(page.items.where((item) => !existingUids.contains(item.uid)));
+    if (page.page == 1) {
+      _newestHistoryPage
+        ..clear()
+        ..addAll(page.items);
+    }
     _loadedPage = page.page;
     _totalPages = page.totalPages;
     notifyListeners();
@@ -180,6 +187,7 @@ class ClipSyncController extends ChangeNotifier {
         );
         if (index >= 0) _devices[index] = renamed;
         _items.clear();
+        _newestHistoryPage.clear();
         _loadedPage = 0;
         _totalPages = 0;
         await _loadMoreHistory();
@@ -187,14 +195,44 @@ class ClipSyncController extends ChangeNotifier {
 
   bool isCurrentDevice(SyncDevice device) => device.uid == _clientUid;
 
-  /// Reloads the newest history page after a client has been idle.
-  Future<void> refreshHistory() => _runBusy(() async {
-    if (_session == null) return;
-    _items.clear();
-    _loadedPage = 0;
-    _totalPages = 0;
-    await _loadMoreHistory();
-  });
+  /// Reloads the newest history page without clearing visible history first.
+  ///
+  /// Returns `true` when the displayed history changed. An unchanged response
+  /// does not notify listeners, which keeps target history views from repainting
+  /// during automatic polling.
+  Future<bool> refreshHistory() async {
+    final session = _session;
+    if (session == null) return false;
+    try {
+      final page = await apiClient.listHistory(session, page: 1);
+      if (_session != session) return false;
+
+      final currentNewestPage = _loadedPage <= 1 ? _items : _newestHistoryPage;
+      final historyChanged = !_sameHistory(currentNewestPage, page.items);
+      final hadMoreHistory = hasMoreHistory;
+      final hadError = _errorMessage != null;
+      _errorMessage = null;
+
+      if (historyChanged) {
+        _items
+          ..clear()
+          ..addAll(page.items);
+        _newestHistoryPage
+          ..clear()
+          ..addAll(page.items);
+        _loadedPage = page.page;
+      }
+      _totalPages = page.totalPages;
+
+      if (historyChanged || hadMoreHistory != hasMoreHistory || hadError) {
+        notifyListeners();
+      }
+      return historyChanged;
+    } catch (error) {
+      _setError(error);
+      rethrow;
+    }
+  }
 
   Future<void> copyItem(ClipItem item) async {
     final session = _session;
@@ -229,6 +267,9 @@ class ClipSyncController extends ChangeNotifier {
       for (final item in uniqueItems) {
         await apiClient.deleteItem(session, item.uid);
         _items.removeWhere((candidate) => candidate.uid == item.uid);
+        _newestHistoryPage.removeWhere(
+          (candidate) => candidate.uid == item.uid,
+        );
       }
     });
   }
@@ -255,6 +296,7 @@ class ClipSyncController extends ChangeNotifier {
       await sessionStore.clearSession();
       _session = null;
       _items.clear();
+      _newestHistoryPage.clear();
       _devices.clear();
       _loadedPage = 0;
       _totalPages = 0;
@@ -298,6 +340,26 @@ class ClipSyncController extends ChangeNotifier {
     _items.removeWhere((candidate) => candidate.uid == item.uid);
     _items.insert(0, item);
     notifyListeners();
+  }
+
+  bool _sameHistory(List<ClipItem> current, List<ClipItem> refreshed) {
+    if (current.length != refreshed.length) return false;
+    for (var index = 0; index < current.length; index += 1) {
+      final existing = current[index];
+      final incoming = refreshed[index];
+      if (existing.uid != incoming.uid ||
+          existing.kind != incoming.kind ||
+          existing.mimeType != incoming.mimeType ||
+          existing.sizeBytes != incoming.sizeBytes ||
+          existing.sourcePlatform != incoming.sourcePlatform ||
+          existing.sourceDeviceName != incoming.sourceDeviceName ||
+          existing.createdAt != incoming.createdAt ||
+          existing.text != incoming.text ||
+          !listEquals(existing.imageBytes, incoming.imageBytes)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<void> _runBusy(Future<void> Function() action) async {

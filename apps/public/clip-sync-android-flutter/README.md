@@ -4,6 +4,8 @@ This target-specific Flutter application browses, copies, refreshes, and deletes
 
 While clipboard history is visible, the app refreshes every 5 seconds for 30 seconds, then every 30 seconds. Automatic refresh pauses after 2 minutes and displays a notice. Press the refresh button or pull down on the history list to refresh immediately and restart the schedule. Leaving the app stops the schedule until the app is visible again.
 
+The circular Refresh icon spins while a request is active. Unchanged history remains mounted without repainting, which prevents automatic refresh flicker.
+
 Install Flutter 3.47, Android SDK Build-Tools and Android Native Development Kit (NDK) r28 or newer, and Rust through the official [`rustup`](https://rustup.rs/) installer. Cargokit requires Rust's stable channel; the current build is validated with Rust 1.97.1:
 
 ```sh

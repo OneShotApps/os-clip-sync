@@ -4,6 +4,8 @@ Clip Sync is a proof-of-concept hosted clipboard service for Windows 11, macOS, 
 
 Visible Android, iOS, and macOS history screens automatically refresh every 5 seconds for 30 seconds, then every 30 seconds until pausing at 2 minutes. The paused indicator remains visible until the user presses Refresh (or pulls down to refresh on mobile), which immediately reloads history and restarts the schedule.
 
+During a refresh, only the circular Refresh icon spins. The existing history remains visible and is repainted only when the server returns changed history.
+
 The approved behavior is defined in [docs/concepts/REQUIREMENTS.md](docs/concepts/REQUIREMENTS.md). Implementation decisions are recorded in [docs/architecture/DECISIONS.md](docs/architecture/DECISIONS.md), and [docs/REQUIREMENT_TRACE.md](docs/REQUIREMENT_TRACE.md) maps every POC outcome to its implementation.
 
 ## Repository map

@@ -68,6 +68,7 @@ void main() {
     addTearDown(controller.dispose);
     await controller.initialize();
     await tester.pumpWidget(ClipSyncApp(controller: controller));
+    expect(find.byKey(const ValueKey('history-refresh-icon')), findsOneWidget);
 
     await tester.tap(find.byKey(ValueKey('select-item-${'E' * 32}')));
     await tester.pump();

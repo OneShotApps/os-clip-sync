@@ -13,3 +13,4 @@ export 'src/sharing/share_receiver.dart';
 export 'src/state/clip_sync_controller.dart';
 export 'src/sync/desktop_sync_controller.dart';
 export 'src/sync/history_refresh_scheduler.dart';
+export 'src/widgets/refresh_activity_icon.dart';

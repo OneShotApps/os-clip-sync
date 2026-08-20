@@ -41,6 +41,7 @@ The POC deliberately has no organization, membership, administrator, or token-re
 - The WebSocket hub holds online connections in process memory. A newly persisted item is sent to other online Windows/macOS client identifiers only. There is no message queue and no reconnect replay.
 - Manually copying a history item updates the local clipboard and loop-prevention baseline without uploading a duplicate.
 - Mobile apps never poll the clipboard and never open the real-time connection. Visible Android and iOS history screens use the approved 5-second, 30-second, then paused refresh schedule; pull-to-refresh or the Refresh button reloads the newest server page and restarts that schedule. The visible macOS history screen follows the same schedule independently of its real-time desktop clipboard connection.
+- Scheduled history refreshes fetch into a temporary page and notify presentation listeners only when history or pagination changes. A target-local activity notifier drives the shared spinning Refresh icon without rebuilding the surrounding history view.
 
 ## Persistence and consistency
 

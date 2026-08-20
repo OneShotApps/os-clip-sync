@@ -192,6 +192,7 @@ class _HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<_HistoryScreen> with WindowListener {
   late final HistoryRefreshScheduler _refreshScheduler;
+  final ValueNotifier<bool> _isRefreshingHistory = ValueNotifier(false);
   final Set<String> _selectedItemUids = {};
 
   ClipSyncController get controller => widget.controller;
@@ -214,16 +215,19 @@ class _HistoryScreenState extends State<_HistoryScreen> with WindowListener {
   }
 
   Future<void> _refreshHistory() async {
-    if (controller.isBusy) return;
+    if (controller.isBusy || _isRefreshingHistory.value) return;
+    _isRefreshingHistory.value = true;
     try {
       await controller.refreshHistory();
     } catch (_) {
       // The controller displays the sanitized API error.
+    } finally {
+      if (mounted) _isRefreshingHistory.value = false;
     }
   }
 
   Future<void> _manualRefresh() async {
-    if (controller.isBusy) return;
+    if (controller.isBusy || _isRefreshingHistory.value) return;
     await _refreshScheduler.refreshNow();
   }
 
@@ -262,6 +266,7 @@ class _HistoryScreenState extends State<_HistoryScreen> with WindowListener {
     _refreshScheduler
       ..removeListener(_refreshStatusChanged)
       ..dispose();
+    _isRefreshingHistory.dispose();
     super.dispose();
   }
 
@@ -448,7 +453,9 @@ class _HistoryScreenState extends State<_HistoryScreen> with WindowListener {
                     IconButton(
                       onPressed: controller.isBusy ? null : _manualRefresh,
                       tooltip: 'Refresh history',
-                      icon: const Icon(Icons.refresh),
+                      icon: RefreshActivityIcon(
+                        isRefreshing: _isRefreshingHistory,
+                      ),
                     ),
                   ],
                 ),

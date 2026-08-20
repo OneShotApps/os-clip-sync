@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:clip_sync_client_core/clip_sync_client_core.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -114,10 +115,67 @@ void main() {
     expect(controller.items.single.text, 'old item');
 
     api.historyText = 'new item';
-    await controller.refreshHistory();
+    final historyChanged = await controller.refreshHistory();
 
+    expect(historyChanged, isTrue);
     expect(controller.items, hasLength(1));
     expect(controller.items.single.text, 'new item');
+  });
+
+  test('unchanged refresh does not notify history listeners', () async {
+    final session = _session();
+    final store = _FakeSessionStore(session);
+    final api = _FakeApiClient()..historyText = 'same item';
+    final controller = ClipSyncController(
+      apiClient: api,
+      sessionStore: store,
+      googleAuthService: GoogleAuthService(sessionStore: store),
+      clipboard: ClipboardAdapter(),
+      shareReceiver: _FakeShareReceiver(),
+      deviceNameProvider: _FakeDeviceNameProvider(),
+      platform: 'android',
+      isDesktop: false,
+    );
+    addTearDown(controller.dispose);
+    await controller.initialize();
+    var notificationCount = 0;
+    controller.addListener(() => notificationCount += 1);
+
+    final historyChanged = await controller.refreshHistory();
+
+    expect(historyChanged, isFalse);
+    expect(notificationCount, 0);
+    expect(controller.isBusy, isFalse);
+  });
+
+  testWidgets('refresh activity icon spins only while refreshing', (
+    tester,
+  ) async {
+    final isRefreshing = ValueNotifier(false);
+    addTearDown(isRefreshing.dispose);
+    await tester.pumpWidget(
+      MaterialApp(home: RefreshActivityIcon(isRefreshing: isRefreshing)),
+    );
+    final rotationFinder = find.byKey(const ValueKey('history-refresh-icon'));
+
+    expect(tester.widget<RotationTransition>(rotationFinder).turns.value, 0);
+
+    isRefreshing.value = true;
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(
+      tester.widget<RotationTransition>(rotationFinder).turns.value,
+      greaterThan(0),
+    );
+
+    isRefreshing.value = false;
+    await tester.pump();
+    expect(
+      tester.widget<RotationTransition>(rotationFinder).turns.value,
+      greaterThan(0),
+    );
+    await tester.pump(const Duration(milliseconds: 800));
+    expect(tester.widget<RotationTransition>(rotationFinder).turns.value, 0);
   });
 
   test('deletes multiple selected history items', () async {
@@ -321,10 +379,13 @@ class _FakeApiClient extends ClipSyncApiClient {
     historyRequestCount += 1;
     return ClipItemPage(
       items: historyTexts.isNotEmpty
-          ? historyTexts.map((text) => _textItem(text, _sequence++)).toList()
+          ? List<ClipItem>.generate(
+              historyTexts.length,
+              (index) => _textItem(historyTexts[index], index + 1),
+            )
           : historyText == null
           ? []
-          : [_textItem(historyText!, _sequence++)],
+          : [_textItem(historyText!, 1)],
       page: 1,
       totalPages: 1,
     );

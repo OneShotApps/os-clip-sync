@@ -90,6 +90,7 @@ void main() {
     final initialHistoryRequests = apiClient.historyRequestCount;
 
     expect(find.byTooltip('Refresh history'), findsOneWidget);
+    expect(find.byKey(const ValueKey('history-refresh-icon')), findsOneWidget);
     await tester.tap(find.byTooltip('Refresh history'));
     await tester.pumpAndSettle();
 

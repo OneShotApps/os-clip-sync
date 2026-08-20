@@ -4,6 +4,8 @@ This target-specific Flutter application browses, copies, refreshes, and deletes
 
 While clipboard history is visible, the app refreshes every 5 seconds for 30 seconds, then every 30 seconds. Automatic refresh pauses after 2 minutes and displays a notice. Press the refresh button or pull down on the history list to refresh immediately and restart the schedule.
 
+The circular Refresh icon spins while a request is active. Unchanged history remains mounted without repainting, which prevents automatic refresh flicker.
+
 ```sh
 flutter pub get
 flutter analyze

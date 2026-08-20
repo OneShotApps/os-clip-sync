@@ -140,6 +140,7 @@ There is no administrator user type or cross-account sharing role described for 
 - Each client registers its operating-system-reported device name. An account-assigned rename is reflected in history on every other device's next refresh.
 - Device listing and renaming are restricted to the authenticated account.
 - While the Android, iOS, or macOS history screen is visible, it refreshes every 5 seconds for the first 30 seconds, then every 30 seconds. Automatic refresh pauses after 2 minutes and shows a visible paused indicator until the user presses Refresh or pulls down to refresh, which reloads history and restarts the schedule.
+- During a history refresh, only the circular Refresh icon animates. The displayed history remains in place and is repainted only when the refreshed history differs.
 
 ### Mobile clipboard access
 

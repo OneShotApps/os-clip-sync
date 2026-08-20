@@ -6,6 +6,8 @@ While the clipboard-history window is visible, history refreshes every 5 seconds
 
 The circular Refresh icon spins while a request is active. Unchanged history remains mounted without repainting, which prevents automatic refresh flicker.
 
+After starting the local Compose stack, run `scripts/up-macos.sh` from the repository root. It builds the debug app with the approved OAuth settings, closes any running Clip Sync macOS process, and launches the new build.
+
 ```sh
 flutter pub get
 flutter analyze

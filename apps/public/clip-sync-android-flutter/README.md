@@ -6,6 +6,8 @@ While clipboard history is visible, the app refreshes every 5 seconds for 30 sec
 
 The circular Refresh icon spins while a request is active. Unchanged history remains mounted without repainting, which prevents automatic refresh flicker.
 
+After starting the local Compose stack, run `scripts/up-android.sh` from the repository root. It starts or reuses an installed Android Virtual Device, builds the debug APK with the approved OAuth settings, closes any running Clip Sync Android process, installs the APK, and launches it.
+
 Install Flutter 3.47, Android SDK Build-Tools and Android Native Development Kit (NDK) r28 or newer, and Rust through the official [`rustup`](https://rustup.rs/) installer. Cargokit requires Rust's stable channel; the current build is validated with Rust 1.97.1:
 
 ```sh

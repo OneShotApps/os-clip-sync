@@ -6,6 +6,8 @@ While clipboard history is visible, the app refreshes every 5 seconds for 30 sec
 
 The circular Refresh icon spins while a request is active. Unchanged history remains mounted without repainting, which prevents automatic refresh flicker.
 
+After starting the local Compose stack, run `scripts/up-iphone.sh` from the repository root. It boots or reuses an installed iPhone simulator, builds with the approved OAuth settings, closes any running Clip Sync iPhone process, installs the app, and launches it.
+
 ```sh
 flutter pub get
 flutter analyze

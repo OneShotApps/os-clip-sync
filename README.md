@@ -51,6 +51,14 @@ flutter pub get
 node ../../../tools/with-google-oauth.js -- flutter run
 ```
 
+After starting `compose.local.yaml`, run one launcher from the repository root. Each launcher validates the local API and prerequisites, builds with the approved OAuth configuration, closes an existing copy of that target app, installs it when needed, and launches it. The mobile launchers reuse a running emulator/simulator or boot an installed one after a machine restart.
+
+```sh
+scripts/up-iphone.sh
+scripts/up-android.sh
+scripts/up-macos.sh
+```
+
 The local defaults use `http://localhost:4200` on desktop/iOS Simulator and `http://10.0.2.2:4200` on the Android emulator. A physical phone needs an explicit reachable address. The committed Google web client must retain the exact `http://localhost:8000` JavaScript origin and redirect URI because the desktop sign-in callback listens on that loopback address. Android and iOS also require the native registrations described in each app's README. Email-code sign-in works without Google configuration.
 
 Run `node tools/with-google-oauth.js --check` from the repository root to validate the file without starting another process. The OAuth values are intentionally distributed to native builds; this exception does not authorize committing service credentials, signing keys, user tokens, or any other file under `keys/`.

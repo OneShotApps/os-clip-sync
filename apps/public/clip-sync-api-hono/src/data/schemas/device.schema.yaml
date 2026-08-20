@@ -9,7 +9,7 @@ properties:
   uid:
     type: string
     pattern: ^[A-F0-9]{32}$
-    description: Stable client UID generated once by the installed application.
+    description: Stable client UID generated once by the installed application and unique within its owning account.
   accountId:
     type: integer
     minimum: 1
@@ -44,9 +44,9 @@ x-storage:
     - field: account_id
       references: clip_sync_core.account.id
   constraints:
-    - name: uk_device_uid
+    - name: uk_device_account_id_uid_deleted_at
       unique: true
-      fields: [uid]
+      fields: [account_id, uid, deleted_at]
     - name: ck_device_platform
       fields: [platform]
   indexes:

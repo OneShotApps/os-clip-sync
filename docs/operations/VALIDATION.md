@@ -13,7 +13,7 @@ bun run openapi:lint
 bun run test
 ```
 
-Unit tests cover configuration, structured routes/errors, authorization middleware behavior, device registration validation, and online-only real-time routing. With the local Compose stack healthy, run `bun run test:integration` to exercise email authentication, account isolation, device registration and rename propagation, create/list/get/delete, and WebSocket source exclusion against real PostgreSQL and MongoDB containers.
+Unit tests cover configuration, structured routes/errors, authorization middleware behavior, device registration validation, and online-only real-time routing. With the local Compose stack healthy, run `bun run test:integration` to exercise email authentication, account isolation, account-scoped reuse of one installation UID, device registration and rename propagation, create/list/get/delete, and WebSocket source exclusion against real PostgreSQL and MongoDB containers.
 
 ## Flutter package and apps
 

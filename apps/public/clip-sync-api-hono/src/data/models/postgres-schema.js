@@ -104,7 +104,7 @@ export const device = core.table(
     deletedAt: timestamp('deleted_at', { withTimezone: true }).notNull(),
   },
   (table) => [
-    unique('uk_device_uid').on(table.uid),
+    unique('uk_device_account_id_uid_deleted_at').on(table.accountId, table.uid, table.deletedAt),
     index('idx_device_account_id_deleted_at').on(table.accountId, table.deletedAt),
     check('ck_device_platform', sql`${table.platform} IN ('windows', 'macos', 'ios', 'android')`),
   ],

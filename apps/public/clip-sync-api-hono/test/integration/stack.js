@@ -204,6 +204,26 @@ await request(`/ux/v1/devices/${sourceClientUid}`, {
   expected: 404,
   body: JSON.stringify({ name: 'Unauthorized rename' }),
 });
+const strangerDevice = await request('/ux/v1/devices/register', {
+  token: stranger.accessToken,
+  method: 'POST',
+  body: JSON.stringify({
+    clientUid: sourceClientUid,
+    platform: 'android',
+    name: 'Integration Android',
+  }),
+});
+assert.equal(strangerDevice.device.name, 'Integration Android');
+const ownerDevices = await request('/ux/v1/devices', { token: owner.accessToken });
+const strangerDevices = await request('/ux/v1/devices', { token: stranger.accessToken });
+assert.equal(
+  ownerDevices.devices.find((device) => device.uid === sourceClientUid).name,
+  'Renamed Integration Mac',
+);
+assert.equal(
+  strangerDevices.devices.find((device) => device.uid === sourceClientUid).name,
+  'Integration Android',
+);
 
 source.socket.close();
 receiver.socket.close();

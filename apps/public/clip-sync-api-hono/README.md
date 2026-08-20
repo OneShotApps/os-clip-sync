@@ -14,6 +14,6 @@ bun run test
 
 `openapi.yaml` documents the client contract. YAML JSON Schemas under `src/data/schemas/` document persisted objects, and `src/data/migrations/` contains idempotent PostgreSQL setup.
 
-After the local Compose stack is healthy, run `bun run test:integration`. The test creates unique accounts through Mailpit, confirms owner isolation, device rename propagation, and the item lifecycle, and verifies live WebSocket delivery excludes the source and does not replay after reconnect.
+After the local Compose stack is healthy, run `bun run test:integration`. The test creates unique accounts through Mailpit, confirms owner isolation, allows one installation UID to register independently after an account switch, verifies device rename propagation and the item lifecycle, and verifies live WebSocket delivery excludes the source and does not replay after reconnect.
 
 Configuration is validated before a datastore connection is opened. Shared environments use the `CLIP_SYNC_*` values listed in the root `.env.example`. Local Compose mounts the approved `keys/google-oauth.json` file read-only and provides its path through `CLIP_SYNC_GOOGLE_OAUTH_CONFIG_PATH`; an explicit `CLIP_SYNC_GOOGLE_CLIENT_IDS` value takes priority in shared environments. Never store a real token or secret in this folder.

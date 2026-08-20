@@ -35,6 +35,14 @@ jobs:
           docker compose -f compose.local.yaml config --quiet
           docker compose --env-file .env.example -f compose.dev.yaml config --quiet
           docker compose --env-file .env.example -f compose.prod.yaml config --quiet
+      - name: Start local integration stack
+        run: docker compose -f compose.local.yaml up -d --wait
+      - name: Validate datastore integration
+        working-directory: apps/public/clip-sync-api-hono
+        run: bun run test:integration
+      - name: Stop local integration stack
+        if: always()
+        run: docker compose -f compose.local.yaml down
       - name: Build production API container
         run: docker compose --env-file .env.example -f compose.dev.yaml build api
 

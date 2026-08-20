@@ -345,6 +345,11 @@ class _MobileHistoryScreenState extends State<_MobileHistoryScreen> {
             icon: const Icon(Icons.devices_outlined),
           ),
           IconButton(
+            onPressed: controller.isBusy ? null : _refresh,
+            tooltip: 'Refresh history',
+            icon: const Icon(Icons.refresh),
+          ),
+          IconButton(
             onPressed: _signOut,
             tooltip: 'Sign out',
             icon: const Icon(Icons.logout),

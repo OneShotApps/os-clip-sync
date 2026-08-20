@@ -66,6 +66,35 @@ void main() {
     expect(apiClient.deletedItemUids, ['E' * 32, 'F' * 32]);
     expect(controller.items, isEmpty);
   });
+
+  testWidgets('shows and invokes the visible history refresh action', (
+    tester,
+  ) async {
+    final sessionStore = _FakeSessionStore();
+    final apiClient = _FakeApiClient([]);
+    final controller = ClipSyncController(
+      apiClient: apiClient,
+      sessionStore: sessionStore,
+      googleAuthService: GoogleAuthService(sessionStore: sessionStore),
+      clipboard: ClipboardAdapter(),
+      shareReceiver: _FakeShareReceiver(),
+      deviceNameProvider: _FakeDeviceNameProvider(),
+      platform: 'android',
+      isDesktop: false,
+    );
+    addTearDown(controller.dispose);
+    await controller.initialize();
+    await tester.pumpWidget(
+      ClipSyncMobileApp(controller: controller, platformName: 'Android'),
+    );
+    final initialHistoryRequests = apiClient.historyRequestCount;
+
+    expect(find.byTooltip('Refresh history'), findsOneWidget);
+    await tester.tap(find.byTooltip('Refresh history'));
+    await tester.pumpAndSettle();
+
+    expect(apiClient.historyRequestCount, initialHistoryRequests + 1);
+  });
 }
 
 ClipItem _historyItem(String uid, String text) => ClipItem(
@@ -100,6 +129,7 @@ class _FakeApiClient extends ClipSyncApiClient {
 
   final List<ClipItem> historyItems;
   final List<String> deletedItemUids = [];
+  int historyRequestCount = 0;
 
   @override
   Future<SyncDevice> registerDevice({
@@ -114,11 +144,14 @@ class _FakeApiClient extends ClipSyncApiClient {
     AuthSession session, {
     required int page,
     int pageSize = 50,
-  }) async => ClipItemPage(
-    items: List<ClipItem>.from(historyItems),
-    page: 1,
-    totalPages: 1,
-  );
+  }) async {
+    historyRequestCount += 1;
+    return ClipItemPage(
+      items: List<ClipItem>.from(historyItems),
+      page: 1,
+      totalPages: 1,
+    );
+  }
 
   @override
   Future<void> deleteItem(AuthSession session, String itemUid) async {

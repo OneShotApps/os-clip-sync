@@ -1,6 +1,6 @@
 # Clip Sync for Android
 
-This target-specific Flutter application browses, copies, refreshes, and deletes private history. Tap the leading content icon on one or more history rows to select them, then use Delete selected and confirm to remove them. Its Devices control lists and renames account-owned devices, and history shows the current source-device name. Android's share sheet can send text or photos to Clip Sync. It never monitors or automatically changes the mobile clipboard.
+This target-specific Flutter application browses, copies, refreshes, and deletes private history. Press the app-bar Refresh button or pull down on history to reload it. Tap the leading content icon on one or more history rows to select them, then use Delete selected and confirm to remove them. Its Devices control lists and renames account-owned devices, and history shows the current source-device name. Android's share sheet can send text or photos to Clip Sync. It never monitors or automatically changes the mobile clipboard.
 
 Install Flutter 3.47, Android SDK Build-Tools and Android Native Development Kit (NDK) r28 or newer, and Rust through the official [`rustup`](https://rustup.rs/) installer. Cargokit requires Rust's stable channel; the current build is validated with Rust 1.97.1:
 

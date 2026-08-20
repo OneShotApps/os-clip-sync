@@ -17,11 +17,12 @@ Unit tests cover configuration, structured routes/errors, authorization middlewa
 
 ## Flutter package and apps
 
-Run `flutter pub get`, `flutter analyze`, and `flutter test` in the shared package and all four app folders. Then build on the target operating systems:
+Run `flutter pub get`, `flutter analyze`, and `flutter test` in the shared package and all four app folders. Android builds require Rust's stable channel through `rustup` (currently tested with Rust 1.97.1) so the stable clipboard plugin's native library is compiled with Android NDK r28 or newer. Then build on the target operating systems:
 
 ```sh
 # Linux or macOS with Android SDK and android/key.properties signing values
 flutter build apk --release --dart-define=CLIP_SYNC_API_URL=https://api.example.com
+./tool/check-16kb-alignment.sh build/app/outputs/flutter-apk/app-release.apk
 
 # macOS with a complete Xcode installation
 flutter build ios --release --no-codesign --dart-define=CLIP_SYNC_API_URL=https://api.example.com
@@ -31,6 +32,8 @@ flutter build macos --release --dart-define=CLIP_SYNC_API_URL=https://api.exampl
 flutter build windows --release --dart-define=CLIP_SYNC_API_URL=https://api.example.com
 msbuild windows/packaging/Package.wapproj /p:Configuration=Release /p:Platform=x64
 ```
+
+The Android alignment command must report every ARM64 and x86-64 library as `ALIGNED` and end with successful APK ZIP verification. Install the Android build on a 16 KB emulator, confirm `adb shell getconf PAGE_SIZE` returns `16384`, and verify that Android does not enable page-size compatibility mode.
 
 Install signed target builds and manually confirm email and Google sign-in, text/photo copy, share target invocation, history pagination, deletion, tray/menu pause, resume baseline, cross-account denial, and online-only delivery. Also confirm that a new macOS copy shows the Mac's System Settings name, rename that Mac from another app's Devices control, and verify the renamed source label appears after the next history refresh on every open client. Test Windows 11, current macOS, current iOS, and a supported Android version because native device-name, share, and clipboard integrations cannot be proven by Dart widget tests.
 

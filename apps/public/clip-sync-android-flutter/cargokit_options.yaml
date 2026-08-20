@@ -1,0 +1,3 @@
+# Build the clipboard plugin's Rust library with the app's Android NDK.
+# Its upstream stable precompiled binary is only aligned for 4 KB memory pages.
+use_precompiled_binaries: false

@@ -54,6 +54,9 @@ jobs:
           flutter-version: 3.47.0
           channel: stable
           cache: true
+      # Cargokit selects Rust's stable channel when Android rebuilds the
+      # clipboard plugin instead of using its 4 KB-aligned precompiled binary.
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
       - name: Validate shared package
         working-directory: packages/private/clip-sync-client-core-flutter
         run: |
@@ -67,6 +70,7 @@ jobs:
           flutter analyze
           flutter test
           node ../../../tools/with-google-oauth.js -- flutter build apk --debug --dart-define=CLIP_SYNC_API_URL=https://api.example.test
+          ./tool/check-16kb-alignment.sh build/app/outputs/flutter-apk/app-debug.apk
 
   flutter-apple:
     runs-on: macos-latest

@@ -41,7 +41,7 @@ See [docs/operations/DEPLOYMENT.md](docs/operations/DEPLOYMENT.md) for shared de
 
 ## Run a client
 
-Flutter 3.47 or newer and Node.js 22 or newer are required. The repository contains the explicitly approved Google OAuth client configuration at `keys/google-oauth.json`. Local Compose mounts that file read-only for the API. The launcher validates it without printing its values and creates a temporary Dart-define file for Flutter that is removed when the command finishes.
+Flutter 3.47 or newer and Node.js 22 or newer are required. Android builds also require Android NDK r28 or newer and Rust's stable channel through `rustup` (currently tested with Rust 1.97.1); the Android app README explains the one-time setup and required 16 KB native-library validation. The repository contains the explicitly approved Google OAuth client configuration at `keys/google-oauth.json`. Local Compose mounts that file read-only for the API. The launcher validates it without printing its values and creates a temporary Dart-define file for Flutter that is removed when the command finishes.
 
 ```sh
 cd apps/public/clip-sync-android-flutter
